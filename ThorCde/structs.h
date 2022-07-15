@@ -10,14 +10,15 @@
 // #define CALLBUTTON2_PIN 30;
 // #define CALLBUTTON3_PIN 27;
 #define CONFIG_RESET 0x101F
-#define CAL_SHUNT_100 0x0333
-#define CALL_SHUNT_1  0X0333
-#define CALL_SHUNT_01 0X0333
+#define CAL_SHUNT_100 0x3000
+#define CALL_SHUNT_1  0X3000
+#define CALL_SHUNT_01 0X3000
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels 
 #define SETCONFIG 0X8327
 #define SETCAL 0x15D8
+#define cardSelect 11
 
 typedef enum   {
     INA0_ADDR = 0x40,

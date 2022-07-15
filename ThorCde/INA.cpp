@@ -53,7 +53,7 @@ void INA::setCalibration(float shuntValue) {
 
 }
 
-void INA::readVoltage() {
+float INA::readVoltage() {
     Wire.beginTransmission(this->addr);
     Wire.write(ShuntVoltageAddr);   
     checkTransmission(Wire.endTransmission());
@@ -63,14 +63,20 @@ void INA::readVoltage() {
     uint8_t lowByte = Wire.read();
     uint16_t voltage = (highByte <<8) | lowByte;
     // Serial.println(highByte, HEX);
-    // Serial.println(lowByte, HEX);
+    
+    voltage = voltage >> 4;
     Serial.println(voltage, HEX);
+    float dummy = static_cast<double>(voltage);
+    Serial.println(dummy);
+    float voltageValue = static_cast<float>(voltage) * voltageLSB;
+    Serial.println(voltageValue * 1000);
+    return voltageValue;
     
     
    
 }
 
-void INA::readCurrent() {
+float INA::readCurrent() {
     Wire.beginTransmission(this->addr);
     Wire.write(CurrentRegAddr);   
     checkTransmission(Wire.endTransmission());
@@ -80,9 +86,12 @@ void INA::readCurrent() {
     uint8_t lowByte = Wire.read();
     uint16_t current = (highByte <<8) | lowByte;
                   //
-     Serial.println(current, HEX);
+    //Serial.println(current, HEX);
+    current = current >> 4;
+    float currentValue = static_cast<float>(current) * currentLSB;
+    return currentValue;
 }
-void INA::readPower() {
+float INA::readPower() {
     Wire.beginTransmission(this->addr);
     Wire.write(PowerRegAddr);   
     checkTransmission(Wire.endTransmission());
@@ -91,13 +100,17 @@ void INA::readPower() {
     uint8_t highByte = Wire.read();        // read that byte into 'slaveByte2' variable
     uint8_t lowByte = Wire.read();
     uint16_t power = (highByte <<8) | lowByte;        
-    Serial.println(power, HEX);
+    // Serial.println(power, HEX);
+    power = power >> 4;
+    float powerValue = static_cast<float>(power) * currentLSB* 32;
+    return powerValue;
 }
 
 
 void INA::checkTransmission(int value) {
     if (value == 0) {
-        Serial.println("transaction succesful");
+        //Serial.println("transaction succesful");
+        delay(10);
     }
     else if (value == 1) {
         Serial.println("data too long to fit in transmit buffer");
@@ -126,3 +139,4 @@ void INA::calculateShuntCal(int maxCurrent, int Rshunt) {
     }
 
 }
+

@@ -1,6 +1,6 @@
 #include <Wire.h> 
 #include <SPI.h> 
-
+#include <SD.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h> 
 #include "INA.h"
@@ -9,11 +9,9 @@
 
 // #include "INA.cpp"
 
-
-
 Adafruit_SSD1306 display(-1);
 RTC_PCF8523 rtc;
-
+File logfile;
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 // Global Enums 
 
@@ -22,6 +20,8 @@ INA ina_1(1);
 INA ina_2(2);
 INA ina_3(3);
 
+INA inaArray[] = {ina_0,ina_1,ina_2,ina_3};
+float inputData[13];
 int inaNum = 0 ;
 //Class Objects
 int lastFire[] = {0,0,0,0};
@@ -90,8 +90,8 @@ void readINA()
     byte highByte = Wire.read();    // read that byte into 'slaveByte2' variable
     byte lowByte = Wire.read();
     uint16_t read = (highByte <<8) | lowByte; 
-    Serial.println(highByte, HEX);
-    Serial.println(lowByte, HEX);
+    // Serial.println(highByte, HEX);
+    // Serial.println(lowByte, HEX);
     Serial.println(read, HEX);
     
  
@@ -262,22 +262,41 @@ void RTCsetUp() {
 
 }
 
+void setupSD() {
+   if (!SD.begin(cardSelect)) {
+    Serial.println("Card init. failed!");
+  }
+  char filename[15];
+  strcpy(filename, "/DATALOG0.TXT");
+  for (uint8_t i = 0; i < 100; i++) {
+    filename[7] = '0' + i/10;
+    filename[8] = '0' + i%10;
+    // create if does not exist, do not open existing, write, sync after write
+    if (! SD.exists(filename)) {
+      break;
+    }
+  }
+  logfile = SD.open(filename, FILE_WRITE);
+  if( ! logfile ) {
+    Serial.print("Couldnt create "); 
+    Serial.println(filename);
+  }
+  Serial.print("Writing to "); 
+  Serial.println(filename);
+  logfile.println("HELLOOOOO");
+
+  Serial.println("Ready!");
+}
+
+
+
 
 
 void setup() {
   Wire.begin();
   // put your setup code here, to run once:
-  Serial.begin(57600);
-  #ifndef ESP8266
-    while (!Serial); // wait for serial port to connect. Needed for native USB
-  #endif
-
-  if (! rtc.begin()) {
-    Serial.println("Couldn't find RTC");
-    Serial.flush();
-    while (1) delay(10);
-  }
-
+  Serial.begin(115200);
+  RTCsetUp();
   display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   display.display();
   display.clearDisplay();
@@ -298,6 +317,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button1PressInterupt, FALLING);
   // attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
   // attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button3PressInterupt, FALLING);
+  setupSD();
 
   
   
@@ -323,15 +343,46 @@ void loop() {
     //readINA();
     delay(1000);
     DateTime now = rtc.now();
-    ina_3.readVoltage();
-    ina_3.readCurrent();
-    ina_3.readPower();
-    Serial.print(now.hour(), DEC);
-    Serial.print(':');
-    Serial.print(now.minute(), DEC);
-    Serial.print(':');
-    Serial.print(now.second(), DEC);
-    Serial.println();
+    // ina_3.readVoltage();
+    // ina_3.readCurrent();
+    // ina_3.readPower();
+    for (int i = 0; i < 4; i++) {
+      inputData[i] = inaArray[i].readVoltage();
+      inputData[i+4] = inaArray[i].readCurrent();
+      inputData[i+8] = inaArray[i].readPower();
+    }
+   
+    inputData[12] = now.second();
+    //ina_2.readVoltage();
+
+    // Serial.print(now.hour(), DEC);
+    // Serial.print(':');
+    // Serial.print(now.minute(), DEC);
+    // Serial.print(':');
+    // Serial.print(now.second(), DEC);
+    // Serial.println();
+    String message;
+    String testString;
+    for (int i =0; i < 13; i++) {
+      // Serial.print(inputData[i] * 1000);
+      // Serial.print(" | ");
+      // logfile.print(inputData[i]);
+      // logfile.print(" | ");
+      message = String(inputData[i],8) + " | ";
+      if (i < 12) {
+        testString.concat(inputData[i]*1000);
+      testString.concat(" | ");
+      }
+      else {
+        testString.concat(inputData[i]);
+        testString.concat(" | ");
+      }
+      
+      
+    }
+    Serial.println(message);
+    Serial.println(testString);
+    logfile.println(testString);
     delay(1000);
     
 
