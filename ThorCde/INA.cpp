@@ -56,7 +56,9 @@ void INA::setCalibration(float shuntValue) {
 float INA::readVoltage() {
     Wire.beginTransmission(this->addr);
     Wire.write(ShuntVoltageAddr);   
-    checkTransmission(Wire.endTransmission());
+    if (checkTransmission(Wire.endTransmission() != 0)) {
+        return 0;
+    }
 
     Wire.requestFrom(this->addr,2, true);  
     uint8_t highByte = Wire.read();        // read that byte into 'slaveByte2' variable
@@ -79,7 +81,9 @@ float INA::readVoltage() {
 float INA::readCurrent() {
     Wire.beginTransmission(this->addr);
     Wire.write(CurrentRegAddr);   
-    checkTransmission(Wire.endTransmission());
+    if (checkTransmission(Wire.endTransmission() != 0)) {
+        return 0;
+    }
 
     Wire.requestFrom(this->addr,2, true);  
     uint8_t highByte = Wire.read();        // read that byte into 'slaveByte2' variable
@@ -94,7 +98,9 @@ float INA::readCurrent() {
 float INA::readPower() {
     Wire.beginTransmission(this->addr);
     Wire.write(PowerRegAddr);   
-    checkTransmission(Wire.endTransmission());
+    if (checkTransmission(Wire.endTransmission() != 0)) {
+        return 0;
+    }
     
     Wire.requestFrom(this->addr,2, true);  
     uint8_t highByte = Wire.read();        // read that byte into 'slaveByte2' variable
@@ -107,28 +113,35 @@ float INA::readPower() {
 }
 
 
-void INA::checkTransmission(int value) {
+int INA::checkTransmission(int value) {
     if (value == 0) {
         //Serial.println("transaction succesful");
-        delay(10);
+        //Serial.println("data too long to fit in transmit buffer");
+        return value;
     }
     else if (value == 1) {
         Serial.println("data too long to fit in transmit buffer");
+        return value;
     }
     else if (value == 2) {
         Serial.println("received NACK on transmit of address.");
+        return value;
     }
     else if (value == 3) {
         Serial.println("received NACK on transmit of data");
+        return value;
     }
     else if (value == 4) {
         Serial.println("other error");
+        return value;
     }
     else if (value == 5) {
         Serial.println("timeout");
+        return value;
     }
     else {
         Serial.println("return value unknown");
+        return value;
     }
 }
 
@@ -140,3 +153,31 @@ void INA::calculateShuntCal(int maxCurrent, int Rshunt) {
 
 }
 
+// void setINAConfig() {
+//   // Wire.beginTransmission(0x43);
+//   // Wire.endTransmission();
+
+//   Wire.beginTransmission(0x43); //target
+//   Wire.write(0x0);  //reg addy
+// 	Wire.write(0x41); //value
+//   Wire.write(0x01);
+//   Wire.endTransmission (false);
+  
+//   // Wire.write(CalibrationRegAddr);
+//   // Wire.write(SETCAL);
+// 	//Wire.endTransmission();
+//   int test = Wire.endTransmission (false);
+//   delay(50);
+//    if (test == 0) {
+//     Serial.println("made it");
+
+//    }
+//    else if (test == 1) {
+//      Serial.println("too long");
+//    }
+
+//    else {
+//     Serial.println("no made it");
+//    }
+  
+// }

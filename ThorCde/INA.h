@@ -14,10 +14,20 @@ class INA {
         float readCurrent();
         float readPower();
         void calculateShuntCal(int maxCurrent, int Rshunt);
+        
+        void reset(); //clears all registers to default values 
+        void ADCRange(int range);
+        void AVGSample(int numberToAvg); //1-1024 (values of 2)
+        void VoltageConversion(int convTime );
+        void CurrentConversion(int convTime);
+        void Mode(int mode);
+        // ability to read any register 
+        uint16_t ReadReg(uint16_t RegAddr);
+        void WriteReg(uint16_t RegAddr,uint16_t data);
     
     private:
         uint16_t addr;
-        void checkTransmission(int value);
+        int checkTransmission(int value);
         uint16_t shunt_cal; 
         float shuntCal100 = 0.0000010;
         float shuntCal1 = 0.0001;

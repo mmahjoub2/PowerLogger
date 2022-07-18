@@ -27,9 +27,12 @@ int inaNum = 0 ;
 int lastFire[] = {0,0,0,0};
 bool clear;
 int count[] = {0,0,0,0};
-
+float prevTime = -10000;
 
 bool flag;
+
+
+
 void staticMenu() {
   display.setTextSize(.01);
   display.setTextColor(WHITE);
@@ -50,33 +53,34 @@ void staticMenu() {
   display.display();
 }
 
-void setINAConfig() {
-  // Wire.beginTransmission(0x43);
-  // Wire.endTransmission();
+void DisplayData(float arr[]) {
+  display.clearDisplay();
+  display.display();
+  String dummy[] = {"1","2","3","4"};
+  for(int i = 0; i<4; i++) {
+    display.setTextSize(.0001);
+    
+    display.setTextColor(WHITE);
+    display.setCursor(0,8*i);
+    display.println(String(i));
 
-  Wire.beginTransmission(0x43); //target
-  Wire.write(0x0);  //reg addy
-	Wire.write(0x41); //value
-  Wire.write(0x01);
-  Wire.endTransmission (false);
+    display.setCursor(20,8*i);
+    display.println(String(arr[i]));
+   
+    display.setCursor(60,8*i);
+    display.println(String(arr[i+4]));
+
+    display.setCursor(100,8*i);
+    display.println(String(arr[i+8]));
+
+    // display.setCursor(110,8*i);
+    // display.println(String(int(arr[12])));
+
+  }
   
-  // Wire.write(CalibrationRegAddr);
-  // Wire.write(SETCAL);
-	//Wire.endTransmission();
-  int test = Wire.endTransmission (false);
-  delay(50);
-   if (test == 0) {
-    Serial.println("made it");
+  display.display();
+  delay(100);
 
-   }
-   else if (test == 1) {
-     Serial.println("too long");
-   }
-
-   else {
-    Serial.println("no made it");
-   }
-  
 }
 
 void readINA()
@@ -230,14 +234,22 @@ void scanI2c()
 
 void RTCsetUp() {
   #ifndef ESP8266
-    while (!Serial); // wait for serial port to connect. Needed for native USB
+    while (!Serial){
+      Serial.println("stuck in serial");
+    } // wait for serial port to connect. Needed for native USB
   #endif
 
   if (! rtc.begin()) {
+    Serial.print("HERW");
     Serial.println("Couldn't find RTC");
     Serial.flush();
     while (1) delay(10);
+    
   }
+  else {
+    Serial.println("made it");
+;  }
+
 
   if (! rtc.initialized() || rtc.lostPower()) {
     Serial.println("RTC is NOT initialized, let's set the time!");
@@ -249,6 +261,7 @@ void RTCsetUp() {
   // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
   }
   rtc.start();
+  Serial.print("HERW");
   float drift = 43; // seconds plus or minus over oservation period - set to 0 to cancel previous calibration.
   float period_sec = (7 * 86400);  // total obsevation period in seconds (86400 = seconds in 1 day:  7 days = (7 * 86400) seconds )
   float deviation_ppm = (drift / period_sec * 1000000); //  deviation in parts per million (μs)
@@ -262,20 +275,27 @@ void RTCsetUp() {
 
 }
 
+
+char filename[15];
 void setupSD() {
    if (!SD.begin(cardSelect)) {
     Serial.println("Card init. failed!");
   }
-  char filename[15];
-  strcpy(filename, "/DATALOG0.TXT");
+  
+  strcpy(filename, "/DATALOG0.csv");
   for (uint8_t i = 0; i < 100; i++) {
     filename[7] = '0' + i/10;
     filename[8] = '0' + i%10;
     // create if does not exist, do not open existing, write, sync after write
-    if (! SD.exists(filename)) {
+    if (SD.exists(filename)) {
+      SD.remove(filename);
+    }
+    else {
       break;
     }
   }
+
+ 
   logfile = SD.open(filename, FILE_WRITE);
   if( ! logfile ) {
     Serial.print("Couldnt create "); 
@@ -283,7 +303,8 @@ void setupSD() {
   }
   Serial.print("Writing to "); 
   Serial.println(filename);
-  logfile.println("HELLOOOOO");
+  logfile.println("Voltage INA1, Voltage INA2, VoltageINA3, VoltageINA3, Current INA1, Current INA2, Current INA3, Current INA4, Power INA1, Power INA2, Power INA3, Power INA4, Time");
+  logfile.close();
 
   Serial.println("Ready!");
 }
@@ -293,26 +314,32 @@ void setupSD() {
 
 
 void setup() {
+  
   Wire.begin();
   // put your setup code here, to run once:
   Serial.begin(115200);
+
   RTCsetUp();
   display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   display.display();
   display.clearDisplay();
+  
   staticMenu();
-  //scanI2c();
+
   Serial.println("INA");
-   pinMode(CALBUTTON0_PIN, INPUT_PULLUP);
-   pinMode(CALLBUTTON1_PIN, INPUT_PULLUP);
+   
   flag = true;
-  //setINAConfig();
+
   Serial.println("INA");
-  //calibrationReg.bitfield_t.Mode = B001;
-  //ss.MODE = 0b000;
-  //ina_3.setCalibration(100);
+
+
+
   delay(500);
-  //readINA();
+
+
+
+  pinMode(CALBUTTON0_PIN, INPUT_PULLUP);
+  pinMode(CALLBUTTON1_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CALBUTTON0_PIN), button0PressInterupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button1PressInterupt, FALLING);
   // attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
@@ -323,6 +350,8 @@ void setup() {
   
 
 }
+
+
 
 void loop() {
 
@@ -338,10 +367,11 @@ void loop() {
   else {
     if (clear) {
       display.clearDisplay();
+      display.display();
       clear = false;
     }
     //readINA();
-    delay(1000);
+    // delay(1000);
     DateTime now = rtc.now();
     // ina_3.readVoltage();
     // ina_3.readCurrent();
@@ -363,27 +393,41 @@ void loop() {
     // Serial.println();
     String message;
     String testString;
+    File dataFile = SD.open(filename, FILE_WRITE);
+    String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
+
     for (int i =0; i < 13; i++) {
-      // Serial.print(inputData[i] * 1000);
-      // Serial.print(" | ");
-      // logfile.print(inputData[i]);
-      // logfile.print(" | ");
-      message = String(inputData[i],8) + " | ";
+
+      message = String(inputData[i],8) + ",";
       if (i < 12) {
+
         testString.concat(inputData[i]*1000);
-      testString.concat(" | ");
+         testString.concat(",");
       }
       else {
-        testString.concat(inputData[i]);
-        testString.concat(" | ");
+        testString.concat(time);
+        // testString.concat(" | ");
       }
       
       
     }
-    Serial.println(message);
-    Serial.println(testString);
-    logfile.println(testString);
-    delay(1000);
+
+    if (dataFile) {
+      Serial.println(message);
+      Serial.println(testString);
+      dataFile.println(testString);
+      dataFile.close();
+      delay(10);
+    }
+
+    
+
+    if (inputData[12] != prevTime) {
+      DisplayData(inputData);
+      prevTime = inputData[12];
+
+    }
+    
     
 
     count[0] = 0;
@@ -394,6 +438,8 @@ void loop() {
   
 
 }
+
+
 
 void button0PressInterupt() {
    if (millis() - lastFire[0] < 200) { // Debounce

@@ -20,6 +20,12 @@
 #define SETCAL 0x15D8
 #define cardSelect 11
 
+typedef enum {
+  shunt100Resolution = .0001,
+  shunt1Resolution = .0001,
+  shunt001Resolution = .0001
+} shuntResolution; 
+
 typedef enum   {
     INA0_ADDR = 0x40,
     INA1_ADDR = 0x41,
@@ -93,6 +99,7 @@ typedef union  {
     uint16_t LIMIT    : 16;            //AAlert Limit Register contains the value used to compare to the register selected in the Mask/Enable Registe
   };
 }AlertLimit_t;
+
 
 
 // [[//I2C addresses 
