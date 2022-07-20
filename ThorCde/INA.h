@@ -3,6 +3,7 @@
 #include "Wire.h"
 #include "structs.h"
 #include <math.h>
+
 class INA {
 
     public: 
@@ -13,14 +14,16 @@ class INA {
         float readVoltage();
         float readCurrent();
         float readPower();
-        void calculateShuntCal(int maxCurrent, int Rshunt);
-        
+        void ADCRange(bool high);
         void reset(); //clears all registers to default values 
-        void ADCRange(int range);
-        void AVGSample(int numberToAvg); //1-1024 (values of 2)
-        void VoltageConversion(int convTime );
+        //TODO: 
+        
+        void AVGSample(uint16_t numberToAvg); //1-1024 (values of 2)
+        void TimeConversion(char input[], int convTime );
         void CurrentConversion(int convTime);
         void Mode(int mode);
+        void calculateShuntCal(int maxCurrent, int Rshunt);
+        
         // ability to read any register 
         uint16_t ReadReg(uint16_t RegAddr);
         void WriteReg(uint16_t RegAddr,uint16_t data);
@@ -38,6 +41,11 @@ class INA {
         CalibrationReg_t calibrationReg;
         MaskEnableReg_t maskEnableReg;
         AlertLimit_t alertLimitReg;
+        uint16_t powerTwo(uint16_t value);
+       
         float uint16_bits(uint16_t in);
         uint16_t float_bits(float f);
+        void resetRegValues();
+        //TODO: ADD MAP FOR ALL INT -> BINARY CONVERSIONS
+     
 };

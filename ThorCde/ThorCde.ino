@@ -338,15 +338,14 @@ void setup() {
 
 
 
-  pinMode(CALBUTTON0_PIN, INPUT_PULLUP);
-  pinMode(CALLBUTTON1_PIN, INPUT_PULLUP);
+
   attachInterrupt(digitalPinToInterrupt(CALBUTTON0_PIN), button0PressInterupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button1PressInterupt, FALLING);
-  // attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
-  // attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button3PressInterupt, FALLING);
-  setupSD();
+  attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
+  attachInterrupt(digitalPinToInterrupt(CALLBUTTON3_PIN), button3PressInterupt, FALLING);
+  // setupSD();
 
-  
+  inaArray[0].reset();
   
 
 }
@@ -355,85 +354,87 @@ void setup() {
 
 void loop() {
 
-  if(inaNum < 4) {
-     MoveCursor();
-      // if (flag)
-      //   Serial.println("LOOP");
-      // else 
-      //   Serial.println("Flase");
-      // delay(500);
-      clear = true;
-  }
-  else {
-    if (clear) {
-      display.clearDisplay();
-      display.display();
-      clear = false;
-    }
-    //readINA();
-    // delay(1000);
-    DateTime now = rtc.now();
-    // ina_3.readVoltage();
-    // ina_3.readCurrent();
-    // ina_3.readPower();
-    for (int i = 0; i < 4; i++) {
-      inputData[i] = inaArray[i].readVoltage();
-      inputData[i+4] = inaArray[i].readCurrent();
-      inputData[i+8] = inaArray[i].readPower();
-    }
+  Serial.println(inaArray[0].readVoltage());
+  Serial.println(inaArray[0].readCurrent());
+  // if(inaNum < 4) {
+  //    MoveCursor();
+
+  //     clear = true;
+  // }
+  // else {
+  //   if (clear) {
+  //     display.clearDisplay();
+  //     display.display();
+  //     clear = false;
+  //   }
+  //   //readINA();
+  //   // delay(1000);
+  //   DateTime now = rtc.now();
+  //   // ina_3.readVoltage();
+  //   // ina_3.readCurrent();
+  //   // ina_3.readPower();
+  //   for (int i = 0; i < 4; i++) {
+  //     inputData[i] = inaArray[i].readVoltage();
+  //     inputData[i+4] = inaArray[i].readCurrent();
+  //     inputData[i+8] = inaArray[i].readPower();
+  //   }
    
-    inputData[12] = now.second();
-    //ina_2.readVoltage();
+  //   inputData[12] = now.second();
+  //   //ina_2.readVoltage();
 
-    // Serial.print(now.hour(), DEC);
-    // Serial.print(':');
-    // Serial.print(now.minute(), DEC);
-    // Serial.print(':');
-    // Serial.print(now.second(), DEC);
-    // Serial.println();
-    String message;
-    String testString;
-    File dataFile = SD.open(filename, FILE_WRITE);
-    String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
+  //   // Serial.print(now.hour(), DEC);
+  //   // Serial.print(':');
+  //   // Serial.print(now.minute(), DEC);
+  //   // Serial.print(':');
+  //   // Serial.print(now.second(), DEC);
+  //   // Serial.println();
+  //   String message;
+  //   String testString;
+  //   File dataFile = SD.open(filename, FILE_WRITE);
+  //   String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
 
-    for (int i =0; i < 13; i++) {
+  //   for (int i =0; i < 13; i++) {
 
-      message = String(inputData[i],8) + ",";
-      if (i < 12) {
+  //     message = String(inputData[i],8) + ",";
+  //     if (i < 12) {
 
-        testString.concat(inputData[i]*1000);
-         testString.concat(",");
-      }
-      else {
-        testString.concat(time);
-        // testString.concat(" | ");
-      }
+  //       testString.concat(inputData[i]*1000);
+  //        testString.concat(",");
+  //     }
+  //     else {
+  //       testString.concat(time);
+  //       // testString.concat(" | ");
+  //     }
       
       
-    }
+  //   }
 
-    if (dataFile) {
-      Serial.println(message);
-      Serial.println(testString);
-      dataFile.println(testString);
-      dataFile.close();
-      delay(10);
-    }
+  //   if (dataFile) {
+  //     Serial.println(message);
+  //     Serial.println(testString);
+  //     dataFile.println(testString);
+  //     dataFile.close();
+  //     delay(10);
+  //   }
 
     
 
-    if (inputData[12] != prevTime) {
-      DisplayData(inputData);
-      prevTime = inputData[12];
+  //   if (inputData[12] != prevTime) {
+  //     DisplayData(inputData);
+  //     prevTime = inputData[12];
 
-    }
+  //   }
     
     
 
-    count[0] = 0;
-    count[1] = 0;
-  }
+  //   count[0] = 0;
+  //   count[1] = 0;
+  // }
+
+   
  
+
+  
  
   
 
@@ -442,13 +443,10 @@ void loop() {
 
 
 void button0PressInterupt() {
-   if (millis() - lastFire[0] < 200) { // Debounce
+   if (millis() - lastFire[0] < 300) { // Debounce
     return;
   }
-  if (flag)
-    flag = false;
-  else 
-    flag = true;
+
   lastFire[0] = millis();
 
   if (count[0] > 2) {
@@ -460,11 +458,13 @@ void button0PressInterupt() {
 
 }
 void button1PressInterupt() {
-   if (millis() - lastFire[1] < 200) { // Debounce
+   if (millis() - lastFire[1] < 300) { // Debounce
     return;
   }
   //Serial.println("button pressed");
   lastFire[1] = millis();
+
+   
 
   if (count[1] == 1) {
     count[1] = 0;
@@ -478,14 +478,42 @@ void button2PressInterupt() {
    if (millis() - lastFire[2] < 200) { // Debounce
     return;
   }
+   
   lastFire[2] = millis();
   count[2]++;
 }
 
-// void button3PressInterupt() {
-//    if (millis() - lastFire[3] < 200) { // Debounce
-//     return;
-//   }
-//   lastFire[3] = millis();
-//   count[3]++;
-// }
+void button3PressInterupt() {
+   if (millis() - lastFire[3] < 200) { // Debounce
+    return;
+  }
+  if (flag)
+    flag = false;
+  else 
+    flag = true;
+  lastFire[3] = millis();
+  count[3]++;
+}
+
+
+ //   Serial.println(inaArray[3].ReadReg(ConfigAddr),HEX);
+  //   delay(1000);
+  //   // inaArray[3].AVGSample(4);
+  //   // delay(1000);
+  //   // Serial.println(inaArray[3].ReadReg(ConfigAddr),HEX);
+  //   //inaArray[3].AVGSample(1024);
+  // inaArray[3].ADCRange(false);
+  //   delay(1000);
+  //   Serial.println(inaArray[3].ReadReg(ConfigAddr),HEX);
+  //   delay(1000);
+  // // inaArray[3].ADCRange(true);
+  // // delay(1000);
+
+  // inaArray[3].reset();
+
+
+    //     // if (flag)
+  //     //   Serial.println("LOOP");
+  //     // else 
+  //     //   Serial.println("Flase");
+  //     // delay(500);
