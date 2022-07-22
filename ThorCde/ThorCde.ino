@@ -102,7 +102,7 @@ void readINA()
 }
 
 void MoveCursor() {
-
+Serial.println("still running");
   if (count[0] == 0) {
     // if callbutton1 pressed here
     // call set =
@@ -117,19 +117,19 @@ void MoveCursor() {
     if (count[1] == 1) {
       if(inaNum == 1) {
         Serial.print("INA0 100 set");
-        ina_0.setCalibration(100);
+        inaArray[inaNum].setCalibration(100);
       }
       else if(inaNum == 1) {
         Serial.print("INA1 100 set");
-        ina_1.setCalibration(100);
+        inaArray[inaNum].setCalibration(100);
       }
       else if (inaNum == 2) {
          Serial.print("INA2 100 set");
-        ina_2.setCalibration(100);
+       inaArray[inaNum].setCalibration(100);
       }
       else if(inaNum == 3) {
          Serial.print("INA3 100 set");
-        ina_3.setCalibration(100);
+       inaArray[inaNum].setCalibration(100);
       }
       count[1] = 0;
       inaNum++;
@@ -150,19 +150,19 @@ void MoveCursor() {
      if (count[1] == 1) {
       if(inaNum == 0) {
         Serial.print("INA0 1 set");
-        ina_0.setCalibration(1);
+       inaArray[inaNum].setCalibration(1);
       }
       else if(inaNum == 1) {
         Serial.print("INA1 1 set");
-        ina_1.setCalibration(1);
+       inaArray[inaNum].setCalibration(1);
       }
       else if (inaNum == 2) {
         Serial.print("INA2 1 set");
-        ina_2.setCalibration(1);
+       inaArray[inaNum].setCalibration(1);
       }
       else if(inaNum == 3) {
         Serial.print("INA3 1 set");
-        ina_3.setCalibration(1);
+       inaArray[inaNum].setCalibration(1);
       }
       count[1] = 0;
       inaNum++;
@@ -181,19 +181,19 @@ void MoveCursor() {
      if (count[1] == 1) {
       if(inaNum == 0) {
         Serial.print("INA0 0.01 set");
-        ina_0.setCalibration(0.01);
+        inaArray[inaNum].setCalibration(0.01);
       }
       else if(inaNum == 1) {
         Serial.print("INA1 0.01 set");
-        ina_1.setCalibration(.01);
+        inaArray[inaNum].setCalibration(.01);
       }
       else if (inaNum == 2) {
         Serial.print("INA2 0.01 set");
-        ina_2.setCalibration(.01);
+       inaArray[inaNum].setCalibration(.01);
       }
       else if(inaNum == 3) {
         Serial.print("INA3 0.01 set");
-        ina_3.setCalibration(.01);
+        inaArray[inaNum].setCalibration(.01);
       }
       count[1] = 0;
       inaNum++;
@@ -319,16 +319,15 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
 
-  RTCsetUp();
+RTCsetUp();  RTCsetUp();
   display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   display.display();
   display.clearDisplay();
-  
   staticMenu();
 
   Serial.println("INA");
    
-  flag = true;
+  flag = true;  
 
   Serial.println("INA");
 
@@ -343,9 +342,14 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button1PressInterupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON3_PIN), button3PressInterupt, FALLING);
-  // setupSD();
+  setupSD();
 
   inaArray[0].reset();
+  for (int i=0; i<4; i++) {
+    inaArray[i].reset();
+  }
+ 
+  
   
 
 }
@@ -354,82 +358,72 @@ void setup() {
 
 void loop() {
 
-  Serial.println(inaArray[0].readVoltage());
-  Serial.println(inaArray[0].readCurrent());
-  // if(inaNum < 4) {
-  //    MoveCursor();
+  if(inaNum < 4) {
+     MoveCursor();
 
-  //     clear = true;
-  // }
-  // else {
-  //   if (clear) {
-  //     display.clearDisplay();
-  //     display.display();
-  //     clear = false;
-  //   }
-  //   //readINA();
-  //   // delay(1000);
-  //   DateTime now = rtc.now();
-  //   // ina_3.readVoltage();
-  //   // ina_3.readCurrent();
-  //   // ina_3.readPower();
-  //   for (int i = 0; i < 4; i++) {
-  //     inputData[i] = inaArray[i].readVoltage();
-  //     inputData[i+4] = inaArray[i].readCurrent();
-  //     inputData[i+8] = inaArray[i].readPower();
-  //   }
+      clear = true;
+  }
+  else {
    
-  //   inputData[12] = now.second();
-  //   //ina_2.readVoltage();
+  if (clear) {
+    display.clearDisplay();
+    display.display();
+    clear = false;
+  }
 
-  //   // Serial.print(now.hour(), DEC);
-  //   // Serial.print(':');
-  //   // Serial.print(now.minute(), DEC);
-  //   // Serial.print(':');
-  //   // Serial.print(now.second(), DEC);
-  //   // Serial.println();
-  //   String message;
-  //   String testString;
-  //   File dataFile = SD.open(filename, FILE_WRITE);
-  //   String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
 
-  //   for (int i =0; i < 13; i++) {
+  DateTime now = rtc.now();
 
-  //     message = String(inputData[i],8) + ",";
-  //     if (i < 12) {
+  for (int i = 0; i < 4; i++) {
+    inputData[i] = inaArray[i].readVoltage();
+    inputData[i+4] = inaArray[i].readCurrent();
+    inputData[i+8] = inaArray[i].readPower();
+  }
 
-  //       testString.concat(inputData[i]*1000);
-  //        testString.concat(",");
-  //     }
-  //     else {
-  //       testString.concat(time);
-  //       // testString.concat(" | ");
-  //     }
-      
-      
-  //   }
 
-  //   if (dataFile) {
-  //     Serial.println(message);
-  //     Serial.println(testString);
-  //     dataFile.println(testString);
-  //     dataFile.close();
-  //     delay(10);
-  //   }
+ 
 
-    
+  inputData[12] = now.second();
+  String testString;
+  File dataFile = SD.open(filename, FILE_WRITE);
+  String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
 
-  //   if (inputData[12] != prevTime) {
-  //     DisplayData(inputData);
-  //     prevTime = inputData[12];
+  for (int i =0; i < 13; i++) {
+    if (i < 12) {
 
-  //   }
+      testString.concat(inputData[i]*1000);
+        testString.concat(",");
+    }
+    else {
+      testString.concat(time);
+      // testString.concat(" | ");
+    }
     
     
+  }
 
-  //   count[0] = 0;
-  //   count[1] = 0;
-  // }
+  if (dataFile) {
+    
+    Serial.println(testString);
+    dataFile.println(testString);
+    dataFile.close();
+    delay(10);
+  }
+
+
+
+  if (inputData[12] != prevTime) {
+    DisplayData(inputData);
+    prevTime = inputData[12];
+
+  }
+   delay(2000);
+    
+    
+
+    count[0] = 0;
+    count[1] = 0;
+  }
 
    
  

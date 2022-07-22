@@ -10,9 +10,9 @@
 #define CALLBUTTON2_PIN 27
 #define CALLBUTTON3_PIN 29
 #define CONFIG_RESET 0x101F
-#define CAL_SHUNT_100 0x3000
-#define CALL_SHUNT_1  0X3000
-#define CALL_SHUNT_01 0X3000
+#define CAL_SHUNT_100 0x473C
+#define CALL_SHUNT_1  0X020D
+#define CALL_SHUNT_01 0x1062
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels 

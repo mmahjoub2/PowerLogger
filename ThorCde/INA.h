@@ -12,6 +12,7 @@ class INA {
         void setCalibration(float shuntNumber);
         void setAlert(int AlertNumber);
         float readVoltage();
+        float readBusVoltage();
         float readCurrent();
         float readPower();
         void ADCRange(bool high);
@@ -27,15 +28,16 @@ class INA {
         // ability to read any register 
         uint16_t ReadReg(uint16_t RegAddr);
         void WriteReg(uint16_t RegAddr,uint16_t data);
+        float calculateShuntResitance(float loadRes, float v_t, float v_sh, float shuntRes);
     
     private:
         uint16_t addr;
         int checkTransmission(int value);
         uint16_t shunt_cal; 
-        float shuntCal100 = 0.0000010;
-        float shuntCal1 = 0.0001;
-        float shuntCal01 = 0.01;
-        float currentLSB = 0.0000564;
+        float shuntCal100 = 1.12 * pow(10,-8);
+        float shuntCal1 = 0.00015625;
+        float shuntCal01 = 0.001953125;
+        float currentLSB = 0;
         float voltageLSB = 0.000040;
         ConfigReg_t configReg;
         CalibrationReg_t calibrationReg;
@@ -46,6 +48,7 @@ class INA {
         float uint16_bits(uint16_t in);
         uint16_t float_bits(float f);
         void resetRegValues();
+        bool adcFlag = true;
         //TODO: ADD MAP FOR ALL INT -> BINARY CONVERSIONS
      
 };

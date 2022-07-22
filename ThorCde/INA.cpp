@@ -20,6 +20,7 @@ void INA::resetRegValues() {
     calibrationReg.bits = 0x0000;
     maskEnableReg.bits = 0x0000;
     alertLimitReg.bits = 0x0000;
+    voltageLSB = 0.000040;
 }
 //Set Register Values
 void INA::reset() {
@@ -30,11 +31,15 @@ void INA::reset() {
 }
 
 void INA::ADCRange(bool high) {
+    adcFlag = high;
     if (high) {
         configReg.bitfield_t.ADCRANGE = 0b0;
     }
     else {
         configReg.bitfield_t.ADCRANGE = 0b1;
+        voltageLSB = .000010;
+
+        
     }
     WriteReg(ConfigAddr,configReg.bits);
 }
@@ -107,14 +112,21 @@ void INA::setCalibration(float shuntValue) {
     
     if (shuntValue == 100) {
         Serial.println("100");
+        this->currentLSB = shuntCal100;
 		WriteReg(CalibrationRegAddr, CAL_SHUNT_100);
+        setCalibration(false);
 	}
 	if (shuntValue == 1) {
+        Serial.println("SET SHUNT CAL");
+        this->currentLSB = shuntCal1;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_1);
+        
 	}
 
 	if(shuntValue == .01) {
+        this->currentLSB = shuntCal01;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_01);
+        
 	}
     
 }
@@ -127,19 +139,35 @@ float INA::readVoltage() {
     }
     voltage = voltage >> 4;
     float voltageValue = static_cast<float>(voltage) * voltageLSB;
+    if(voltageValue > 83) {
+        return 0;
+    }
     return voltageValue;
     
-    
+}
+float INA::readBusVoltage() {
    
+    uint16_t busVoltage = ReadReg(BusVoltageAddr);
+    if(busVoltage == 0xFFFF) {
+        return 0;
+    }
+    busVoltage = busVoltage >> 4;
+    float voltageValue = static_cast<float>(busVoltage) * voltageLSB;
+    return busVoltage;
+    
 }
 
 float INA::readCurrent() {
     uint16_t current = ReadReg(CurrentRegAddr);
+    Serial.println(current);
     if (current == 0xFFFF) {
         return 0;
     }
     //Serial.println(current, HEX);
     current = current >> 4;
+    Serial.println(current, HEX);
+    Serial.print("Current LSB: ");
+    Serial.println(this->currentLSB*10000000);
     float currentValue = static_cast<float>(current) * currentLSB;
     return currentValue;
 }
@@ -236,6 +264,12 @@ uint16_t INA::powerTwo(uint16_t value) {
     uint16_t below = above >> 1;  // find the next lower power of two.
 
     return (above - value) < (value - below) ? above : below;
+}
+
+float INA::calculateShuntResitance(float loadRes, float v_t, float v_sh, float shuntRes) {
+    float expectedCurrent = v_t /(loadRes+shuntRes);
+    return  v_sh/expectedCurrent;
+
 }
 
 
