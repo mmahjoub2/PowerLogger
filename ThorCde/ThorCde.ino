@@ -48,7 +48,9 @@ void staticMenu() {
   display.setTextSize(.01);
   display.setCursor(0, 20);
   display.println("SHUNT 0.01");
-  
+
+  display.setCursor(100, 20);
+  display.println("INA");
  
   display.display();
 }
@@ -100,9 +102,22 @@ void readINA()
     
  
 }
-
+int previnaNum = -1000;
 void MoveCursor() {
-Serial.println("still running");
+
+// Serial.println("still running");
+  if (previnaNum != inaNum) {
+    display.setCursor(118, 20);
+    display.setTextColor(WHITE, BLACK);
+    display.println(" ");
+    display.display();
+    display.setCursor(118, 20);
+    String temp = String(inaNum);
+    display.println(temp);
+    previnaNum = inaNum;
+  }
+  
+
   if (count[0] == 0) {
     // if callbutton1 pressed here
     // call set =
@@ -115,7 +130,7 @@ Serial.println("still running");
     display.println("   ");
     display.display();
     if (count[1] == 1) {
-      if(inaNum == 1) {
+      if(inaNum == 0) {
         Serial.print("INA0 100 set");
         inaArray[inaNum].setCalibration(100);
       }
@@ -268,7 +283,7 @@ void RTCsetUp() {
   float drift_unit = 4.34; // use with offset mode PCF8523_TwoHours
   // float drift_unit = 4.069; //For corrections every min the drift_unit is 4.069 ppm (use with offset mode PCF8523_OneMinute)
   int offset = round(deviation_ppm / drift_unit);
-  // rtc.calibrate(PCF8523_TwoHours, offset); // Un-comment to perform calibration once drift (seconds) and observation period (seconds) are correct
+  rtc.calibrate(PCF8523_TwoHours, offset); // Un-comment to perform calibration once drift (seconds) and observation period (seconds) are correct
   // rtc.calibrate(PCF8523_TwoHours, 0); // Un-comment to cancel previous calibration
 
   Serial.print("Offset is "); Serial.println(offset); // Print to control offset
@@ -309,6 +324,33 @@ void setupSD() {
   Serial.println("Ready!");
 }
 
+void calibrateINA() {
+  uint16_t total = 0;
+  for (int i = 0; i< 10; i++) {
+    Serial.println("++++++++++++++++++++++++++++++++++++++++++");
+    Serial.print("VOltage: ");
+    float voltage = inaArray[0].readVoltage();
+    Serial.println(voltage * pow(10,3));
+    float current = inaArray[0].readCurrent() *pow(10,6);
+    Serial.print("Current: ");
+    Serial.println(current);
+    Serial.println(inaArray[0].ReadReg(ConfigAddr), HEX);
+    Serial.println(inaArray[0].ReadReg(CalibrationRegAddr), HEX);
+    Serial.print("shunt calc");
+    float Rshunt = inaArray[0].calculateShuntResitance(117, 4.001,voltage,0.01);
+    Serial.println(Rshunt);
+    uint16_t regValue = inaArray[0].calculateShuntCal(Rshunt);
+    Serial.println(regValue, HEX);
+    Serial.println("++++++++++++++++++++++++++++++++++++++++++");
+    total = total + regValue;
+  }
+  total = total/10;
+  Serial.println(total, HEX);
+  //inaArray[0].WriteReg(CalibrationRegAddr, total);
+  delay(2000);
+}
+
+
 
 
 
@@ -319,7 +361,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
 
-RTCsetUp();  RTCsetUp();
+  RTCsetUp();  
   display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   display.display();
   display.clearDisplay();
@@ -342,7 +384,7 @@ RTCsetUp();  RTCsetUp();
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button1PressInterupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON3_PIN), button3PressInterupt, FALLING);
-  setupSD();
+  //setupSD();
 
   inaArray[0].reset();
   for (int i=0; i<4; i++) {
@@ -355,7 +397,6 @@ RTCsetUp();  RTCsetUp();
 }
 
 
-
 void loop() {
 
   if(inaNum < 4) {
@@ -363,66 +404,79 @@ void loop() {
 
       clear = true;
   }
+
   else {
    
-  if (clear) {
-    display.clearDisplay();
-    display.display();
-    clear = false;
-  }
-
-
-  DateTime now = rtc.now();
-
-  for (int i = 0; i < 4; i++) {
-    inputData[i] = inaArray[i].readVoltage();
-    inputData[i+4] = inaArray[i].readCurrent();
-    inputData[i+8] = inaArray[i].readPower();
-  }
-
-
- 
-
-  inputData[12] = now.second();
-  String testString;
-  File dataFile = SD.open(filename, FILE_WRITE);
-  String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
-
-  for (int i =0; i < 13; i++) {
-    if (i < 12) {
-
-      testString.concat(inputData[i]*1000);
-        testString.concat(",");
-    }
-    else {
-      testString.concat(time);
-      // testString.concat(" | ");
+    if (clear) {
+      display.clearDisplay();
+      display.display();
+      clear = false;
+      calibrateINA();
     }
     
-    
-  }
+    Serial.println("++++++++++++++++++++++++++++++++++++++++++");
+    Serial.print("VOltage: ");
+    float voltage = inaArray[0].readVoltage();
+    Serial.println(voltage * pow(10,3));
+    float current = inaArray[0].readCurrent() *pow(10,6);
+    Serial.print("Current: ");
+    Serial.println(current);
+    delay(2000);
 
-  if (dataFile) {
-    
-    Serial.println(testString);
-    dataFile.println(testString);
-    dataFile.close();
-    delay(10);
-  }
+    // DateTime now = rtc.now();
+
+    // for (int i = 0; i < 4; i++) {
+    //   inputData[i] = inaArray[i].readVoltage();
+    //   inputData[i+4] = inaArray[i].readCurrent();
+    //   inputData[i+8] = inaArray[i].readPower();
+    // }
 
 
+  
 
-  if (inputData[12] != prevTime) {
-    DisplayData(inputData);
-    prevTime = inputData[12];
+    // inputData[12] = now.second();
+    // String testString;
+    // File dataFile = SD.open(filename, FILE_WRITE);
+    // String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
 
-  }
-   delay(2000);
-    
-    
+    // for (int i =0; i < 13; i++) {
+    //   if (i < 12) {
 
-    count[0] = 0;
-    count[1] = 0;
+    //     testString.concat(inputData[i]*pow(10,6));
+    //       testString.concat(",");
+    //   }
+    //   else {
+    //     testString.concat(time);
+    //     // testString.concat(" | ");
+    //   }
+      
+      
+    // }
+
+    // if (dataFile) {
+      
+    //   Serial.println(testString);
+    //   dataFile.println(testString);
+    //   dataFile.close();
+    //   delay(10);
+    // }
+    // Serial.println("+++++++++++++++++++++++++++++");
+    // Serial.print(inaArray[0].ReadReg(ConfigAddr), HEX);
+    // Serial.println("+++++++++++++++++++++++++++++");
+    // delay(2000);
+
+
+    // if (inputData[12] != prevTime) {
+    //   DisplayData(inputData);
+    //   prevTime = inputData[12];
+
+    // }
+    // delay(2000);
+      
+      
+
+    //   count[0] = 0;
+    //   count[1] = 0;
   }
 
    

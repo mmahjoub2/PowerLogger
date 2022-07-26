@@ -9,7 +9,7 @@ class INA {
     public: 
         INA(int InaNumber);
         void setConfig();
-        void setCalibration(float shuntNumber);
+        void setCalibration(double shuntNumber);
         void setAlert(int AlertNumber);
         float readVoltage();
         float readBusVoltage();
@@ -23,7 +23,7 @@ class INA {
         void TimeConversion(char input[], int convTime );
         void CurrentConversion(int convTime);
         void Mode(int mode);
-        void calculateShuntCal(int maxCurrent, int Rshunt);
+        uint16_t calculateShuntCal(float Rshunt);
         
         // ability to read any register 
         uint16_t ReadReg(uint16_t RegAddr);
@@ -34,9 +34,9 @@ class INA {
         uint16_t addr;
         int checkTransmission(int value);
         uint16_t shunt_cal; 
-        float shuntCal100 = 1.12 * pow(10,-8);
+        float shuntCal100 = 1.01 * pow(10,-7);
         float shuntCal1 = 0.00015625;
-        float shuntCal01 = 0.001953125;
+        float shuntCal01 = 1.9 * pow(10,-4);
         float currentLSB = 0;
         float voltageLSB = 0.000040;
         ConfigReg_t configReg;

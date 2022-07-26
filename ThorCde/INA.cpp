@@ -108,13 +108,13 @@ void INA::AVGSample(uint16_t numberToAvg) {
 
 //     }
 // }
-void INA::setCalibration(float shuntValue) {
+void INA::setCalibration(double shuntValue) {
     
     if (shuntValue == 100) {
         Serial.println("100");
         this->currentLSB = shuntCal100;
 		WriteReg(CalibrationRegAddr, CAL_SHUNT_100);
-        setCalibration(false);
+        ADCRange(false);
 	}
 	if (shuntValue == 1) {
         Serial.println("SET SHUNT CAL");
@@ -126,6 +126,7 @@ void INA::setCalibration(float shuntValue) {
 	if(shuntValue == .01) {
         this->currentLSB = shuntCal01;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_01);
+        ADCRange(false);
         
 	}
     
@@ -134,7 +135,7 @@ void INA::setCalibration(float shuntValue) {
 float INA::readVoltage() {
    
     uint16_t voltage = ReadReg(ShuntVoltageAddr);
-    if(voltage == 0xFFFF) {
+    if(voltage == 0xFFFF || voltage == 0xFFF0) {
         return 0;
     }
     voltage = voltage >> 4;
@@ -148,7 +149,7 @@ float INA::readVoltage() {
 float INA::readBusVoltage() {
    
     uint16_t busVoltage = ReadReg(BusVoltageAddr);
-    if(busVoltage == 0xFFFF) {
+    if(busVoltage == 0xFFFF|| busVoltage == 0xFFF0) {
         return 0;
     }
     busVoltage = busVoltage >> 4;
@@ -159,21 +160,21 @@ float INA::readBusVoltage() {
 
 float INA::readCurrent() {
     uint16_t current = ReadReg(CurrentRegAddr);
-    Serial.println(current);
-    if (current == 0xFFFF) {
+    Serial.print("current reg value: ");
+    Serial.println(current, HEX);
+    if (current == 0xFFFF || current == 0xFFF0) {
         return 0;
     }
     //Serial.println(current, HEX);
     current = current >> 4;
-    Serial.println(current, HEX);
     Serial.print("Current LSB: ");
-    Serial.println(this->currentLSB*10000000);
+    Serial.println(this->currentLSB*pow(10,8));
     float currentValue = static_cast<float>(current) * currentLSB;
     return currentValue;
 }
 float INA::readPower() {
     uint16_t power = ReadReg(CurrentRegAddr);
-    if (power == 0xFFFF) {
+    if (power == 0xFFFF ||power == 0xFFF0 ) {
         return 0;
     }      
     // Serial.println(power, HEX);
@@ -215,11 +216,8 @@ int INA::checkTransmission(int value) {
     }
 }
 
-void INA::calculateShuntCal(int maxCurrent, int Rshunt) {
-    float maxCurr;
-    if (Rshunt = 100) {
-        maxCurr = .0008192;
-    }
+uint16_t INA::calculateShuntCal(float Rshunt) {
+    return 0.08192/(this->currentLSB * Rshunt);
 
 }
 
