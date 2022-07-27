@@ -56,6 +56,7 @@ class INA {
         bool adcFlag = true;
         float shuntRes = 0;
         void setShuntOverLimit();
+        void setShuntUnderLimit();
         void setLimitValue(bool high);
         //TODO: ADD MAP FOR ALL INT -> BINARY CONVERSIONS
      

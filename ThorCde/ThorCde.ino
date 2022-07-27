@@ -312,7 +312,7 @@ void calibrateINA(int iterations) {
   float total = 0;
   for (int i = 0; i< iterations; i++) {
     float voltage = inaArray[0].readVoltage();
-    total = total + inaArray[0].calculateShuntResitance(100, 9,voltage,0.01);
+    total = total + inaArray[0].calculateShuntResitance(100, 5,voltage,1);
    
   }
   total = total/iterations;
@@ -324,7 +324,7 @@ void calibrateINA(int iterations) {
 
 
 
-
+//1EE0
 
 
 void setup() {
@@ -388,22 +388,22 @@ void loop() {
 
   else {
    
-    // if (clear) {
-    //   display.clearDisplay();
-    //   display.display();
-    //   clear = false;
-    //   //calibrateINA(30);
-    // }
+    if (clear) {
+      display.clearDisplay();
+      display.display();
+      clear = false;
+      calibrateINA(30);
+    }
     
     // check for any interupts 
    
-    // float voltage = inaArray[0].readVoltage();
-    // float current = inaArray[0].calculateCurrent(voltage);
-    // Serial.print("Voltage: ");
-    // Serial.println(voltage* pow(10,3));
-    // Serial.print("Current: ");
-    // Serial.println(current * pow(10,3));
-    // delay(1000);
+    float voltage = inaArray[0].readVoltage();
+    float current = inaArray[0].calculateCurrent(voltage);
+    Serial.print("Voltage: ");
+    Serial.println(voltage* pow(10,3));
+    Serial.print("Current: ");
+    Serial.println(current * pow(10,3));
+    delay(1000);
 
     // DateTime now = rtc.now();
 

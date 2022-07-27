@@ -14,10 +14,8 @@ INA::INA(int INAnumber) {
         this->addr = INA3_ADDR;
     }
     resetRegValues();
-    delay(100);
-    // Serial.println("made it before");
-    // setShuntOverLimit();
-    // Serial.println("made it here");
+   
+    
 }
 void INA::resetRegValues() {
     configReg.bits = configDefault;
@@ -131,6 +129,7 @@ void INA::setCalibration(double shuntValue) {
 float INA::readVoltage() {
    
     uint16_t voltage = ReadReg(ShuntVoltageAddr);
+    Serial.print("Voltage Reg Value: ");
     Serial.println(voltage, HEX);
     delay(2000);
     if(voltage == 0xFFFF || voltage == 0xFFF0) {
@@ -281,16 +280,20 @@ float INA::calculatePower(float current) {
 }
 
 void INA::setShuntOverLimit() {
-    
-    alertLimitReg.bits = 0x0001;
-    WriteReg(AlertLimitAddr,maskEnableReg.bits);
     maskEnableReg.bitfield_t.SOL = 0b1;
-    WriteReg(MaskEnableAddr,maskEnableReg.bits);
+    this->WriteReg(MaskEnableAddr,maskEnableReg.bits);
+}
+
+void INA::setShuntUnderLimit() {
+    maskEnableReg.bitfield_t.SUL = 0b1;
+    maskEnableReg.bitfield_t.SOL = 0b0;
+    this->WriteReg(MaskEnableAddr,maskEnableReg.bits);
 }
 
 void INA::setLimitValue(bool high) {
     if (high) {
         Serial.println("set high");
+        alertLimitReg.bits = 0x0010;
     }
 }
 
