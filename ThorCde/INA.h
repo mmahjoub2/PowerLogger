@@ -24,11 +24,15 @@ class INA {
         void CurrentConversion(int convTime);
         void Mode(int mode);
         uint16_t calculateShuntCal(float Rshunt);
-        
+
+        float calculateCurrent(float voltage);
+        float calculatePower(float current);
+
         // ability to read any register 
         uint16_t ReadReg(uint16_t RegAddr);
         void WriteReg(uint16_t RegAddr,uint16_t data);
         float calculateShuntResitance(float loadRes, float v_t, float v_sh, float shuntRes);
+        void setShuntRes(float shutRes);
     
     private:
         uint16_t addr;
@@ -39,6 +43,7 @@ class INA {
         float shuntCal01 = 1.9 * pow(10,-4);
         float currentLSB = 0;
         float voltageLSB = 0.000040;
+        float busVoltageLSB = 25.6 * pow(10,-3);
         ConfigReg_t configReg;
         CalibrationReg_t calibrationReg;
         MaskEnableReg_t maskEnableReg;
@@ -49,6 +54,9 @@ class INA {
         uint16_t float_bits(float f);
         void resetRegValues();
         bool adcFlag = true;
+        float shuntRes = 0;
+        void setShuntOverLimit();
+        void setLimitValue(bool high);
         //TODO: ADD MAP FOR ALL INT -> BINARY CONVERSIONS
      
 };

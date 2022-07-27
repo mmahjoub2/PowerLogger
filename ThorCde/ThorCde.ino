@@ -31,7 +31,8 @@ float prevTime = -10000;
 
 bool flag;
 
-
+//Alert Flags 
+bool alertFlag[] {false, false, false, false};
 
 void staticMenu() {
   display.setTextSize(.01);
@@ -85,23 +86,7 @@ void DisplayData(float arr[]) {
 
 }
 
-void readINA()
-{
 
-    Wire.beginTransmission(0x43);
-    Wire.write(0x05);   
-    Wire.endTransmission();   
-    
-    Wire.requestFrom(0x43,2,true);  
-    byte highByte = Wire.read();    // read that byte into 'slaveByte2' variable
-    byte lowByte = Wire.read();
-    uint16_t read = (highByte <<8) | lowByte; 
-    // Serial.println(highByte, HEX);
-    // Serial.println(lowByte, HEX);
-    Serial.println(read, HEX);
-    
- 
-}
 int previnaNum = -1000;
 void MoveCursor() {
 
@@ -276,7 +261,6 @@ void RTCsetUp() {
   // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
   }
   rtc.start();
-  Serial.print("HERW");
   float drift = 43; // seconds plus or minus over oservation period - set to 0 to cancel previous calibration.
   float period_sec = (7 * 86400);  // total obsevation period in seconds (86400 = seconds in 1 day:  7 days = (7 * 86400) seconds )
   float deviation_ppm = (drift / period_sec * 1000000); //  deviation in parts per million (μs)
@@ -324,30 +308,18 @@ void setupSD() {
   Serial.println("Ready!");
 }
 
-void calibrateINA() {
-  uint16_t total = 0;
-  for (int i = 0; i< 10; i++) {
-    Serial.println("++++++++++++++++++++++++++++++++++++++++++");
-    Serial.print("VOltage: ");
+void calibrateINA(int iterations) {
+  float total = 0;
+  for (int i = 0; i< iterations; i++) {
     float voltage = inaArray[0].readVoltage();
-    Serial.println(voltage * pow(10,3));
-    float current = inaArray[0].readCurrent() *pow(10,6);
-    Serial.print("Current: ");
-    Serial.println(current);
-    Serial.println(inaArray[0].ReadReg(ConfigAddr), HEX);
-    Serial.println(inaArray[0].ReadReg(CalibrationRegAddr), HEX);
-    Serial.print("shunt calc");
-    float Rshunt = inaArray[0].calculateShuntResitance(117, 4.001,voltage,0.01);
-    Serial.println(Rshunt);
-    uint16_t regValue = inaArray[0].calculateShuntCal(Rshunt);
-    Serial.println(regValue, HEX);
-    Serial.println("++++++++++++++++++++++++++++++++++++++++++");
-    total = total + regValue;
+    total = total + inaArray[0].calculateShuntResitance(100, 9,voltage,0.01);
+   
   }
-  total = total/10;
-  Serial.println(total, HEX);
-  //inaArray[0].WriteReg(CalibrationRegAddr, total);
-  delay(2000);
+  total = total/iterations;
+  inaArray[0].setShuntRes(total);
+  Serial.print("Shunt Res: ");
+  Serial.println(total);
+  delay(10000);
 }
 
 
@@ -379,11 +351,15 @@ void setup() {
 
 
 
-
+  // pinMode(ALERT3_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CALBUTTON0_PIN), button0PressInterupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button1PressInterupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(CALLBUTTON3_PIN), button3PressInterupt, FALLING);
+  // attachInterrupt(digitalPinToInterrupt(ALERT0_PIN), alertZeroInterupt, FALLING);
+  // attachInterrupt(digitalPinToInterrupt(ALERT1_PIN), alertOneInterupt, FALLING);
+  // attachInterrupt(digitalPinToInterrupt(ALERT2_PIN), alertTwoInterupt, FALLING);
+  // attachInterrupt(digitalPinToInterrupt(ALERT3_PIN), alertThreeInterupt, FALLING);
   //setupSD();
 
   inaArray[0].reset();
@@ -398,7 +374,12 @@ void setup() {
 
 
 void loop() {
-
+  //  for (int i =0; i < 4; i++) {
+  //     if (alertFlag[i] = true) {
+  //       Serial.print("alert");
+  //       alertFlag[i] = false;
+  //     }
+  //   }
   if(inaNum < 4) {
      MoveCursor();
 
@@ -407,21 +388,22 @@ void loop() {
 
   else {
    
-    if (clear) {
-      display.clearDisplay();
-      display.display();
-      clear = false;
-      calibrateINA();
-    }
+    // if (clear) {
+    //   display.clearDisplay();
+    //   display.display();
+    //   clear = false;
+    //   //calibrateINA(30);
+    // }
     
-    Serial.println("++++++++++++++++++++++++++++++++++++++++++");
-    Serial.print("VOltage: ");
-    float voltage = inaArray[0].readVoltage();
-    Serial.println(voltage * pow(10,3));
-    float current = inaArray[0].readCurrent() *pow(10,6);
-    Serial.print("Current: ");
-    Serial.println(current);
-    delay(2000);
+    // check for any interupts 
+   
+    // float voltage = inaArray[0].readVoltage();
+    // float current = inaArray[0].calculateCurrent(voltage);
+    // Serial.print("Voltage: ");
+    // Serial.println(voltage* pow(10,3));
+    // Serial.print("Current: ");
+    // Serial.println(current * pow(10,3));
+    // delay(1000);
 
     // DateTime now = rtc.now();
 
@@ -490,6 +472,7 @@ void loop() {
 
 
 
+//Interupts 
 void button0PressInterupt() {
    if (millis() - lastFire[0] < 300) { // Debounce
     return;
@@ -522,6 +505,7 @@ void button1PressInterupt() {
   }
 }
 
+// connect to BLE?
 void button2PressInterupt() {
    if (millis() - lastFire[2] < 200) { // Debounce
     return;
@@ -531,6 +515,7 @@ void button2PressInterupt() {
   count[2]++;
 }
 
+// set into low power mode (on/off button)
 void button3PressInterupt() {
    if (millis() - lastFire[3] < 200) { // Debounce
     return;
@@ -543,25 +528,17 @@ void button3PressInterupt() {
   count[3]++;
 }
 
-
- //   Serial.println(inaArray[3].ReadReg(ConfigAddr),HEX);
-  //   delay(1000);
-  //   // inaArray[3].AVGSample(4);
-  //   // delay(1000);
-  //   // Serial.println(inaArray[3].ReadReg(ConfigAddr),HEX);
-  //   //inaArray[3].AVGSample(1024);
-  // inaArray[3].ADCRange(false);
-  //   delay(1000);
-  //   Serial.println(inaArray[3].ReadReg(ConfigAddr),HEX);
-  //   delay(1000);
-  // // inaArray[3].ADCRange(true);
-  // // delay(1000);
-
-  // inaArray[3].reset();
-
-
-    //     // if (flag)
-  //     //   Serial.println("LOOP");
-  //     // else 
-  //     //   Serial.println("Flase");
-  //     // delay(500);
+//alert0 interupt
+void alertZeroInterupt() {
+  alertFlag[0] = true;
+}
+void alertOneInterupt() {
+  alertFlag[1] = true;
+}
+void alertTwoInterupt() {
+  alertFlag[2] = true;
+}
+void alertThreeInterupt() {
+  alertFlag[3] = true;
+}
+ 

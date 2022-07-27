@@ -12,7 +12,7 @@
 #define CONFIG_RESET 0x101F
 #define CAL_SHUNT_100 0x07EA
 #define CALL_SHUNT_1  0X020D
-#define CALL_SHUNT_01 0x1249
+#define CALL_SHUNT_01 0x2492
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels 
