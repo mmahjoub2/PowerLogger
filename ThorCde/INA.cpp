@@ -108,11 +108,13 @@ void INA::setCalibration(double shuntValue) {
         Serial.println("100");
         this->currentLSB = shuntCal100;
 		WriteReg(CalibrationRegAddr, CAL_SHUNT_100);
+        this->shuntRes = 100;
         ADCRange(false);
 	}
 	if (shuntValue == 1) {
         Serial.println("SET SHUNT CAL");
         this->currentLSB = shuntCal1;
+        this->shuntRes = 1;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_1);
         
 	}
@@ -120,6 +122,7 @@ void INA::setCalibration(double shuntValue) {
 	if(shuntValue == .01) {
         this->currentLSB = shuntCal01;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_01);
+        this->shuntRes = 0.01;
         ADCRange(false);
         
 	}
@@ -129,9 +132,6 @@ void INA::setCalibration(double shuntValue) {
 float INA::readVoltage() {
    
     uint16_t voltage = ReadReg(ShuntVoltageAddr);
-    Serial.print("Voltage Reg Value: ");
-    Serial.println(voltage, HEX);
-    delay(2000);
     if(voltage == 0xFFFF || voltage == 0xFFF0) {
         return 0;
     }
@@ -155,15 +155,11 @@ float INA::readBusVoltage() {
 
 float INA::readCurrent() {
     uint16_t current = ReadReg(CurrentRegAddr);
-    Serial.print("current reg value: ");
-    Serial.println(current, HEX);
     if (current == 0xFFFF || current == 0xFFF0) {
         return 0;
     }
     //Serial.println(current, HEX);
     current = current >> 4;
-    Serial.print("Current LSB: ");
-    Serial.println(this->currentLSB*pow(10,8));
     float currentValue = static_cast<float>(current) * currentLSB;
     return currentValue;
 }
