@@ -10,9 +10,9 @@
 #define CALLBUTTON2_PIN 27
 #define CALLBUTTON3_PIN 29
 #define CONFIG_RESET 0x101F
-#define CAL_SHUNT_100 0x473C
+#define CAL_SHUNT_100 0x07EA
 #define CALL_SHUNT_1  0X020D
-#define CALL_SHUNT_01 0x1062
+#define CALL_SHUNT_01 0x2492
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels 
@@ -27,7 +27,7 @@
 // } shuntResolution; 
 
 typedef enum {
-  configDefault = 0x4127,
+  configDefault = 0x4127
 
 } defaults;
 typedef enum   {

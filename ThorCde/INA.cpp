@@ -14,6 +14,8 @@ INA::INA(int INAnumber) {
         this->addr = INA3_ADDR;
     }
     resetRegValues();
+   
+    
 }
 void INA::resetRegValues() {
     configReg.bits = configDefault;
@@ -46,8 +48,6 @@ void INA::ADCRange(bool high) {
 
 void INA::AVGSample(uint16_t numberToAvg) {
     uint16_t closeTwo = powerTwo(numberToAvg);
-    Serial.println(closeTwo, HEX);
-    Serial.println(closeTwo, DEC);
     // if (closestPowTwo)
     if (closeTwo == 1) {
         configReg.bitfield_t.AVG = 0b000;
@@ -82,9 +82,8 @@ void INA::AVGSample(uint16_t numberToAvg) {
     
 }
 
-// void INA::TimeConversion(char input[], int convTime) {
+// void INA::TimeConversion( int convTime) {
 //     bool voltageConv;
-//     char sName[] = "Voltage"
 //     if (convTime == 140)
 
 //     else if(convTime == 204)
@@ -101,24 +100,21 @@ void INA::AVGSample(uint16_t numberToAvg) {
 
 //     else if (convTime ==)
 
-//     if( strcmp(sName,input) == 0 )  {
-//         voltageConv = true;
-//     }
-//     else {
-
-//     }
+   
 // }
-void INA::setCalibration(float shuntValue) {
+void INA::setCalibration(double shuntValue) {
     
     if (shuntValue == 100) {
         Serial.println("100");
         this->currentLSB = shuntCal100;
 		WriteReg(CalibrationRegAddr, CAL_SHUNT_100);
-        setCalibration(false);
+        this->shuntRes = 100;
+        ADCRange(false);
 	}
 	if (shuntValue == 1) {
         Serial.println("SET SHUNT CAL");
         this->currentLSB = shuntCal1;
+        this->shuntRes = 1;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_1);
         
 	}
@@ -126,6 +122,8 @@ void INA::setCalibration(float shuntValue) {
 	if(shuntValue == .01) {
         this->currentLSB = shuntCal01;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_01);
+        this->shuntRes = 0.01;
+        ADCRange(false);
         
 	}
     
@@ -134,46 +132,41 @@ void INA::setCalibration(float shuntValue) {
 float INA::readVoltage() {
    
     uint16_t voltage = ReadReg(ShuntVoltageAddr);
-    if(voltage == 0xFFFF) {
+    if(voltage == 0xFFFF || voltage == 0xFFF0) {
         return 0;
     }
     voltage = voltage >> 4;
     float voltageValue = static_cast<float>(voltage) * voltageLSB;
-    if(voltageValue > 83) {
-        return 0;
-    }
+   
     return voltageValue;
     
 }
 float INA::readBusVoltage() {
    
     uint16_t busVoltage = ReadReg(BusVoltageAddr);
-    if(busVoltage == 0xFFFF) {
+    if(busVoltage == 0xFFFF|| busVoltage == 0xFFF0) {
         return 0;
     }
     busVoltage = busVoltage >> 4;
-    float voltageValue = static_cast<float>(busVoltage) * voltageLSB;
+    float voltageValue = static_cast<float>(busVoltage) * busVoltageLSB;
     return busVoltage;
     
 }
 
 float INA::readCurrent() {
     uint16_t current = ReadReg(CurrentRegAddr);
-    Serial.println(current);
-    if (current == 0xFFFF) {
+    if (current == 0xFFFF || current == 0xFFF0) {
         return 0;
     }
     //Serial.println(current, HEX);
     current = current >> 4;
-    Serial.println(current, HEX);
-    Serial.print("Current LSB: ");
-    Serial.println(this->currentLSB*10000000);
     float currentValue = static_cast<float>(current) * currentLSB;
     return currentValue;
 }
+
 float INA::readPower() {
     uint16_t power = ReadReg(CurrentRegAddr);
-    if (power == 0xFFFF) {
+    if (power == 0xFFFF ||power == 0xFFF0 ) {
         return 0;
     }      
     // Serial.println(power, HEX);
@@ -215,11 +208,8 @@ int INA::checkTransmission(int value) {
     }
 }
 
-void INA::calculateShuntCal(int maxCurrent, int Rshunt) {
-    float maxCurr;
-    if (Rshunt = 100) {
-        maxCurr = .0008192;
-    }
+uint16_t INA::calculateShuntCal(float Rshunt) {
+    return 0.08192/(this->currentLSB * Rshunt);
 
 }
 
@@ -267,39 +257,39 @@ uint16_t INA::powerTwo(uint16_t value) {
 }
 
 float INA::calculateShuntResitance(float loadRes, float v_t, float v_sh, float shuntRes) {
+
     float expectedCurrent = v_t /(loadRes+shuntRes);
-    return  v_sh/expectedCurrent;
+    return v_sh/expectedCurrent;
 
 }
 
+float INA::calculateCurrent(float voltage) {
+    return voltage/shuntRes;
+}
 
-//UTILS functions 
+void INA::setShuntRes(float shutRes) {
+    this->shuntRes = shutRes;
+}
 
-// void setINAConfig() {
-//   // Wire.beginTransmission(0x43);
-//   // Wire.endTransmission();
+float INA::calculatePower(float current) {
+    return this->readBusVoltage() * current;
+}
 
-//   Wire.beginTransmission(0x43); //target
-//   Wire.write(0x0);  //reg addy
-// 	Wire.write(0x41); //value
-//   Wire.write(0x01);
-//   Wire.endTransmission (false);
-  
-//   // Wire.write(CalibrationRegAddr);
-//   // Wire.write(SETCAL);
-// 	//Wire.endTransmission();
-//   int test = Wire.endTransmission (false);
-//   delay(50);
-//    if (test == 0) {
-//     Serial.println("made it");
+void INA::setShuntOverLimit() {
+    maskEnableReg.bitfield_t.SOL = 0b1;
+    this->WriteReg(MaskEnableAddr,maskEnableReg.bits);
+}
 
-//    }
-//    else if (test == 1) {
-//      Serial.println("too long");
-//    }
+void INA::setShuntUnderLimit() {
+    maskEnableReg.bitfield_t.SUL = 0b1;
+    maskEnableReg.bitfield_t.SOL = 0b0;
+    this->WriteReg(MaskEnableAddr,maskEnableReg.bits);
+}
 
-//    else {
-//     Serial.println("no made it");
-//    }
-  
-// }
+void INA::setLimitValue(bool high) {
+    if (high) {
+        Serial.println("set high");
+        alertLimitReg.bits = 0x0010;
+    }
+}
+
