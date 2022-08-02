@@ -33,6 +33,8 @@ class INA {
         void WriteReg(uint16_t RegAddr,uint16_t data);
         float calculateShuntResitance(float loadRes, float v_t, float v_sh, float shuntRes);
         void setShuntRes(float shutRes);
+
+        bool getADCFlag();
     
     private:
         uint16_t addr;

@@ -46,8 +46,8 @@ void RTCsetUp() {
   float drift_unit = 4.34; // use with offset mode PCF8523_TwoHours
   // float drift_unit = 4.069; //For corrections every min the drift_unit is 4.069 ppm (use with offset mode PCF8523_OneMinute)
   int offset = round(deviation_ppm / drift_unit);
-  rtc.calibrate(PCF8523_TwoHours, offset); // Un-comment to perform calibration once drift (seconds) and observation period (seconds) are correct
-  // rtc.calibrate(PCF8523_TwoHours, 0); // Un-comment to cancel previous calibration
+  //rtc.calibrate(PCF8523_TwoHours, offset); // Un-comment to perform calibration once drift (seconds) and observation period (seconds) are correct
+  rtc.calibrate(PCF8523_TwoHours, 0); // Un-comment to cancel previous calibration
 
   Serial.print("Offset is "); Serial.println(offset); // Print to control offset
 
@@ -68,22 +68,24 @@ void setupSD() {
     if (SD.exists(filename)) {
       SD.remove(filename);
     }
-    else {
-      break;
-    }
+   
   }
+  
 
- 
+  strcpy(filename, "/DATALOG0.csv");
   logfile = SD.open(filename, FILE_WRITE);
   if( ! logfile ) {
     Serial.print("Couldnt create "); 
     Serial.println(filename);
   }
-  Serial.print("Writing to "); 
-  Serial.println(filename);
-  logfile.println("Voltage INA1, Voltage INA2, VoltageINA3, VoltageINA3, Current INA1, Current INA2, Current INA3, Current INA4, Power INA1, Power INA2, Power INA3, Power INA4, Time");
-  logfile.close();
+  else {
+    Serial.print("Writing to "); 
+    Serial.println(filename);
+    logfile.println("Voltage INA1, Voltage INA2, VoltageINA3, VoltageINA3, Current INA1, Current INA2, Current INA3, Current INA4, Power INA1, Power INA2, Power INA3, Power INA4, Time");
+    logfile.close();
 
+  }
+  
   Serial.println("Ready!");
 }
 

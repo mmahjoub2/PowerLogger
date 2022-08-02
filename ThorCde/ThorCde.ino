@@ -29,6 +29,8 @@ bool button3pressFlag = false;
 bool alertFlag[] {false, false, false, false};
 
 bool startFlag = false;
+int restartCount = 0;
+
 
 /*
 	TODO:	
@@ -61,7 +63,6 @@ void staticCalibrationChoice() {
 
 bool calibrationChoice() { 
 	while(1) {
-		Serial.println(buttonFlag[0]);
 		if (buttonFlag[0]) {
 			buttonFlag[0] = false;
 			if (count[0] == 1) {
@@ -71,9 +72,7 @@ bool calibrationChoice() {
 				count[0]++;
 			}
 		}
-		Serial.print("calibration choice count:");
-		Serial.println(count[0]);
-
+		
 		staticCalibrationChoice();
 		
 		if (count[0] == 0) {
@@ -144,7 +143,7 @@ void showCalRes(float shuntRes) {
 	display.setCursor(60, 20);
 	display.println(String(shuntRes));
 	display.display();
-	delay(2000);
+	delay(1000);
 	display.clearDisplay();
 	display.display();		
 }
@@ -296,7 +295,6 @@ void staticMenu() {
 */
 
 void staticDisplayDataMenu() {
-	Serial.println("here");
 	display.setTextSize(.0001);
 	display.setTextColor(WHITE);
 	display.setCursor(100,0);
@@ -330,10 +328,7 @@ void DisplayData(float arr[]) {
 		if (count[0] == 4) {
 			count[0] = 0;
     	}
-    	
     	buttonFlag[0] = false;
-		Serial.print("count:");
-		Serial.println(count[0]);
 		
 	}
 	
@@ -356,23 +351,27 @@ void DisplayData(float arr[]) {
 	display.setCursor(50,0);
 	display.setTextSize(.0001);
 	display.setTextColor(WHITE, BLACK);
-	display.println("   ");
+	display.println("     ");
 	display.setCursor(50,10);
 	display.setTextSize(.0001);
 	display.setTextColor(WHITE, BLACK);
-	display.println("   ");
+	display.println("     ");
 	display.setTextSize(.0001);
 	display.setCursor(50,20);
-	display.println("   ");
+	display.println("     ");
 	display.display();
 
 	//Display new vaLues
 	display.setCursor(50,0);
-	display.println(String(arr[count[0]]));
+
+  float data = arr[count[0]] * pow(10,3);
+	display.println(String(data, 1));
+  data = arr[count[0]+4] * pow(10,3);
 	display.setCursor(50,10);
-	display.println(String(arr[count[0]+4]));
+	display.println(String(data, 1));
 	display.setCursor(50,20);
-	display.println(String(arr[count[0]+8]));
+  data = arr[count[0]+8] * pow(10,3);
+	display.println(String(data, 1));
 	
 	// display.setCursor(110,8*i);
 	// display.println(String(int(arr[12])));
@@ -509,25 +508,30 @@ void MoveCursor() {
   
 }
 
-float calibrateINA(int iterations, int inaIndex, float load, float shuntRes) {
+float calibrateINA(int iterations, int inaIndex, float load, double shuntRes) {
 	float total = 0;
 	float inputVoltage;
+	Serial.print("Shunt Res: ");
+	Serial.println(shuntRes);
+
 	if (shuntRes == 1 || shuntRes == 0.01) {
 		inputVoltage = 5;
 	}
-	else if (shuntRes == 100) {
-		inputVoltage = 0.04;
-	}
+	
+	if (shuntRes == 100) {
+			inputVoltage = 0.04;
+		}
 
 	for (int i = 0; i< iterations; i++) {
 		float voltage = inaArray[inaIndex].readVoltage();
-		total = total + inaArray[inaIndex].calculateShuntResitance(100, inputVoltage ,voltage,shuntRes);
+		total = total + inaArray[inaIndex].calculateShuntResitance(load, inputVoltage ,voltage,shuntRes);
 	}
 
 	total = total/iterations;
 	inaArray[inaIndex].setShuntRes(total);
 	Serial.print("Shunt Res: ");
 	Serial.println(total);
+
 	return total;
 }
 
@@ -567,20 +571,26 @@ void setup() {
 }
 
 bool first = true;
-bool tesy = true;
+bool CalibrationChoiceState;
 bool cal;
 void loop() {
+	// ON STATE
 	if (startFlag) {
 		if(first) {
 			display.clearDisplay();
 			display.display();
 			first = false;
+			//reintialize SD Card here
+			filename[7] = '0' + (restartCount/2)/10;
+			filename[8] = '0' + (restartCount/2)%10;
 		}
+
 		if(inaNum < 4) {
 			staticMenu();
 			MoveCursor();
 			clear = true;
 		}
+		
 		else {
 			if (clear) {
 				display.clearDisplay();
@@ -591,10 +601,12 @@ void loop() {
 				for (int i = 0; i < 4; i++) {
 					count[i] = 0;
 				}
+        		CalibrationChoiceState = true;
 			}
-			if (tesy) {
+
+			if (CalibrationChoiceState) {
 				cal = calibrationChoice();
-				tesy = false;
+				CalibrationChoiceState = false;
 				display.clearDisplay();
 				display.display();
 				count[0] = 0;
@@ -602,31 +614,46 @@ void loop() {
 			
 			if (cal && calNum < 4) {
 				calibrationMenu();
-				Serial.println(count[0]);
-				delay(1000);
 				if(calNum == 3) {
 					count[0] = 0;
  				}
 				
 			}
+
 			else {
 				// check for any interupts 
 				DateTime now = rtc.now();
-
 				for (int i = 0; i < 4; i++) {
+
 					inputData[i] = inaArray[i].readVoltage();
+
+					if (inputData[i] < 0.02 && inaArray[i].getADCFlag() && inputData [i] != 0) {
+						Serial.print("Flip ADC Range for: INA NUM ");
+						Serial.println(i);
+						delay(5000);
+						inaArray[i].ADCRange(false);
+					}
+					if (inputData[i] > 0.02 && inaArray[i].getADCFlag() == false) {
+						inaArray[i].ADCRange(true);
+						Serial.print("Flip ADC Range for: INA NUM ");
+						Serial.println(i);
+						delay(5000);
+					}
 					inputData[i+4] = inaArray[i].calculateCurrent(inputData[i]);
 					inputData[i+8] = inaArray[i].calculatePower(inputData[i+4]);
+
 				}
 
 				inputData[12] = now.second();
 				String testString;
+				Serial.print("FILE NAME: ");  
+				Serial.println(filename);
 				File dataFile = SD.open(filename, FILE_WRITE);
 				String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
 
 				for (int i =0; i < 13; i++) {
 					if (i < 12) {
-						testString.concat(inputData[i]*pow(10,6));
+						testString.concat(String(inputData[i],6));
 						testString.concat(",");
 					}
 					else {
@@ -635,13 +662,13 @@ void loop() {
 					}
 				}
 
-				// if (dataFile) {
-			
-				//   Serial.println(testString);
-				//   dataFile.println(testString);
-				//   dataFile.close();
-				//   delay(10);
-				// }
+				if (dataFile) {
+					Serial.println(testString);
+					dataFile.println(testString);
+					dataFile.flush();
+					dataFile.close();
+					delay(10);
+				}
 			
 				if (inputData[12] != prevTime) {
 					DisplayData(inputData);
@@ -650,6 +677,8 @@ void loop() {
 			}
 		}
 	}
+
+	// OFF STATE
 	else {
 		if (!first) {
 			display.clearDisplay();
@@ -667,7 +696,7 @@ void loop() {
 		}
 		prevCount = 1000;
 		previnaNum = -1000;
-		tesy = true;
+		CalibrationChoiceState = true;
 	}
 	
 
@@ -680,30 +709,15 @@ void button0PressInterupt() {
    if (millis() - lastFire[0] < 300) { // Debounce
     return;
   }
-
   lastFire[0] = millis();
   buttonFlag[0] = true;
-  // if (count[0] > 2) {
-  //   count[0] = 0;
-  // }
-  // else {
-  //   count[0]++;
-  // }
-
 }
 void button1PressInterupt() {
    if (millis() - lastFire[1] < 300) { // Debounce
     return;
   }
-
   lastFire[1] = millis();
   buttonFlag[1] = true;
-  // if (count[1] == 1) {
-  //   count[1] = 0;
-  // }
-  // else {
-  //   count[1]++;
-  // }
 }
 
 // connect to BLE?
@@ -717,13 +731,14 @@ void button2PressInterupt() {
 
 // set into low power mode (on/off button)
 void button3PressInterupt() {
-   if (millis() - lastFire[3] < 200) { // Debounce
+   if (millis() - lastFire[3] < 300) { // Debounce
     return;
   }
   if (startFlag)
     startFlag = false;
   else 
     startFlag = true;
+  restartCount++;
 }
 
 //alert0 interupt

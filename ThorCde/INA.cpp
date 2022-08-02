@@ -36,6 +36,7 @@ void INA::ADCRange(bool high) {
     adcFlag = high;
     if (high) {
         configReg.bitfield_t.ADCRANGE = 0b0;
+        voltageLSB = .000040;
     }
     else {
         configReg.bitfield_t.ADCRANGE = 0b1;
@@ -122,7 +123,7 @@ void INA::setCalibration(double shuntValue) {
 	if(shuntValue == .01) {
         this->currentLSB = shuntCal01;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_01);
-        this->shuntRes = 0.01;
+        this->shuntRes = 0.022;
         ADCRange(false);
         
 	}
@@ -149,7 +150,7 @@ float INA::readBusVoltage() {
     }
     busVoltage = busVoltage >> 4;
     float voltageValue = static_cast<float>(busVoltage) * busVoltageLSB;
-    return busVoltage;
+    return voltageValue;
     
 }
 
@@ -183,7 +184,7 @@ int INA::checkTransmission(int value) {
         return value;
     }
     else if (value == 1) {
-        Serial.println("data too long to fit in transmit buffer");
+        // Serial.println("data too long to fit in transmit buffer");
         return value;
     }
     else if (value == 2) {
@@ -259,11 +260,19 @@ uint16_t INA::powerTwo(uint16_t value) {
 float INA::calculateShuntResitance(float loadRes, float v_t, float v_sh, float shuntRes) {
 
     float expectedCurrent = v_t /(loadRes+shuntRes);
+    // Serial.print("resistance: ");
+    // Serial.println((loadRes+shuntRes)) ;
+    // Serial.print("v_t: ");
+    // Serial.println((v_t)) ;
+    // Serial.print("v_sh: ");
+    // Serial.println((v_sh)) ;
+    // delay(1000);
     return v_sh/expectedCurrent;
 
 }
 
 float INA::calculateCurrent(float voltage) {
+    Serial.println(shuntRes);
     return voltage/shuntRes;
 }
 
@@ -291,5 +300,9 @@ void INA::setLimitValue(bool high) {
         Serial.println("set high");
         alertLimitReg.bits = 0x0010;
     }
+}
+
+bool INA::getADCFlag() {
+    return this->adcFlag;
 }
 
