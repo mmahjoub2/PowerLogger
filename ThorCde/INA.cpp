@@ -1,6 +1,7 @@
 #include "INA.h"
 
 INA::INA(int INAnumber) {
+    // either use else if or switch 
     if (INAnumber == 0) {
         this->addr = INA0_ADDR;
     }
@@ -22,6 +23,7 @@ void INA::resetRegValues() {
     calibrationReg.bits = 0x0000;
     maskEnableReg.bits = 0x0000;
     alertLimitReg.bits = 0x0000;
+    // make a 0.00004 a define so it does not have to be changed everywhere 
     voltageLSB = 0.000040;
 }
 //Set Register Values
@@ -83,75 +85,54 @@ void INA::AVGSample(uint16_t numberToAvg) {
     
 }
 
-// void INA::TimeConversion( int convTime) {
-//     bool voltageConv;
-//     if (convTime == 140)
-
-//     else if(convTime == 204)
-
-//     else if(convTime == 332)
-
-//     else if(convTime == 588)
-
-//     else if(convTime == 1100)
-
-//     else if(convTime == 2116)
-
-//     else if(convTime == 4156)
-
-//     else if (convTime ==)
-
-   
-// }
 void INA::setCalibration(double shuntValue) {
-    
     if (shuntValue == 100) {
         Serial.println("100");
         this->currentLSB = shuntCal100;
 		WriteReg(CalibrationRegAddr, CAL_SHUNT_100);
-        this->shuntRes = 100;
+        this->shuntRes = 100.68;
         ADCRange(false);
 	}
 	if (shuntValue == 1) {
         Serial.println("SET SHUNT CAL");
         this->currentLSB = shuntCal1;
         this->shuntRes = 1;
-        WriteReg(CalibrationRegAddr, CALL_SHUNT_1);
-        
+        WriteReg(CalibrationRegAddr, CALL_SHUNT_1); 
 	}
 
 	if(shuntValue == .01) {
         this->currentLSB = shuntCal01;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_01);
         this->shuntRes = 0.022;
-        ADCRange(false);
-        
+        ADCRange(false); 
 	}
-    
 }
 
 float INA::readVoltage() {
-   
+     // TODO: CHECK if MSB 1 use two complement ()
     uint16_t voltage = ReadReg(ShuntVoltageAddr);
+    int16_t voltageInt = int16_t(voltage);
+    // if (voltage & 0x8000 != 0) {
+    //     voltage = (~voltage) + 0b1;
+    // }
     if(voltage == 0xFFFF || voltage == 0xFFF0) {
         return 0;
     }
-    voltage = voltage >> 4;
-    float voltageValue = static_cast<float>(voltage) * voltageLSB;
-   
+    voltageInt = voltageInt >> 4;
+    float voltageValue = static_cast<float>(voltageInt) * voltageLSB;
     return voltageValue;
     
 }
+
 float INA::readBusVoltage() {
-   
+   // TODO: CHECK if MSB 1 use two complement ()
     uint16_t busVoltage = ReadReg(BusVoltageAddr);
     if(busVoltage == 0xFFFF|| busVoltage == 0xFFF0) {
         return 0;
     }
     busVoltage = busVoltage >> 4;
     float voltageValue = static_cast<float>(busVoltage) * busVoltageLSB;
-    return voltageValue;
-    
+    return voltageValue;   
 }
 
 float INA::readCurrent() {
@@ -225,7 +206,6 @@ void INA::WriteReg(uint16_t RegAddr, uint16_t data) {
 	Wire.write(v.MSB);
     Wire.write(v.LSB);
 	checkTransmission(Wire.endTransmission());
-    
 }
 
 uint16_t INA::ReadReg(uint16_t RegAddr) {
@@ -238,7 +218,6 @@ uint16_t INA::ReadReg(uint16_t RegAddr) {
     uint8_t highByte = Wire.read();        // read that byte into 'slaveByte2' variable
     uint8_t lowByte = Wire.read();
     uint16_t value = (highByte <<8) | lowByte;
-
     return value;
 }
 
@@ -254,25 +233,16 @@ uint16_t INA::powerTwo(uint16_t value) {
 
     uint16_t below = above >> 1;  // find the next lower power of two.
 
+    //  make this a if statement 
     return (above - value) < (value - below) ? above : below;
 }
 
 float INA::calculateShuntResitance(float loadRes, float v_t, float v_sh, float shuntRes) {
-
     float expectedCurrent = v_t /(loadRes+shuntRes);
-    // Serial.print("resistance: ");
-    // Serial.println((loadRes+shuntRes)) ;
-    // Serial.print("v_t: ");
-    // Serial.println((v_t)) ;
-    // Serial.print("v_sh: ");
-    // Serial.println((v_sh)) ;
-    // delay(1000);
     return v_sh/expectedCurrent;
-
 }
 
 float INA::calculateCurrent(float voltage) {
-    Serial.println(shuntRes);
     return voltage/shuntRes;
 }
 
@@ -306,3 +276,24 @@ bool INA::getADCFlag() {
     return this->adcFlag;
 }
 
+
+// void INA::TimeConversion( int convTime) {
+//     bool voltageConv;
+//     if (convTime == 140)
+
+//     else if(convTime == 204)
+
+//     else if(convTime == 332)
+
+//     else if(convTime == 588)
+
+//     else if(convTime == 1100)
+
+//     else if(convTime == 2116)
+
+//     else if(convTime == 4156)
+
+//     else if (convTime ==)
+
+   
+// }
