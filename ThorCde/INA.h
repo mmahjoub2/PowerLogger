@@ -5,7 +5,6 @@
 #include <math.h>
 
 class INA {
-
     public: 
         INA(int InaNumber);
         void setConfig();
@@ -17,22 +16,19 @@ class INA {
         float readPower();
         void ADCRange(bool high);
         void reset(); //clears all registers to default values 
-        //TODO: 
-        
         void AVGSample(uint16_t numberToAvg); //1-1024 (values of 2)
         void TimeConversion(char input[], int convTime );
         void CurrentConversion(int convTime);
         void Mode(int mode);
         uint16_t calculateShuntCal(float Rshunt);
-
         float calculateCurrent(float voltage);
         float calculatePower(float current);
-
         // ability to read any register 
         uint16_t ReadReg(uint16_t RegAddr);
         void WriteReg(uint16_t RegAddr,uint16_t data);
         float calculateShuntResitance(float loadRes, float v_t, float v_sh, float shuntRes);
         void setShuntRes(float shutRes);
+        bool getADCFlag();
     
     private:
         uint16_t addr;
@@ -49,7 +45,6 @@ class INA {
         MaskEnableReg_t maskEnableReg;
         AlertLimit_t alertLimitReg;
         uint16_t powerTwo(uint16_t value);
-       
         float uint16_bits(uint16_t in);
         uint16_t float_bits(float f);
         void resetRegValues();
@@ -58,6 +53,4 @@ class INA {
         void setShuntOverLimit();
         void setShuntUnderLimit();
         void setLimitValue(bool high);
-        //TODO: ADD MAP FOR ALL INT -> BINARY CONVERSIONS
-     
 };
