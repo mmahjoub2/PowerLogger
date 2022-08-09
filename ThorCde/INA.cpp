@@ -18,13 +18,14 @@ INA::INA(int INAnumber) {
    
     
 }
+
 void INA::resetRegValues() {
     configReg.bits = configDefault;
     calibrationReg.bits = 0x0000;
     maskEnableReg.bits = 0x0000;
     alertLimitReg.bits = 0x0000;
     // make a 0.00004 a define so it does not have to be changed everywhere 
-    voltageLSB = 0.000040;
+    voltageLSB = voltageLSBHigh;
 }
 //Set Register Values
 void INA::reset() {
@@ -38,11 +39,11 @@ void INA::ADCRange(bool high) {
     adcFlag = high;
     if (high) {
         configReg.bitfield_t.ADCRANGE = 0b0;
-        voltageLSB = .000040;
+        voltageLSB = voltageLSBHigh;
     }
     else {
         configReg.bitfield_t.ADCRANGE = 0b1;
-        voltageLSB = .000010;
+        voltageLSB = voltageLSBLow;
 
         
     }
@@ -85,25 +86,26 @@ void INA::AVGSample(uint16_t numberToAvg) {
     
 }
 
+
 void INA::setCalibration(double shuntValue) {
     if (shuntValue == 100) {
         Serial.println("100");
         this->currentLSB = shuntCal100;
 		WriteReg(CalibrationRegAddr, CAL_SHUNT_100);
-        this->shuntRes = 100.68;
+        this->shuntRes = shuntRes100;
         ADCRange(false);
 	}
 	if (shuntValue == 1) {
         Serial.println("SET SHUNT CAL");
         this->currentLSB = shuntCal1;
-        this->shuntRes = 1;
+        this->shuntRes = shuntRes1;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_1); 
 	}
 
 	if(shuntValue == .01) {
         this->currentLSB = shuntCal01;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_01);
-        this->shuntRes = 0.022;
+        this->shuntRes = shuntRes01;
         ADCRange(false); 
 	}
 }
@@ -157,7 +159,7 @@ float INA::readPower() {
     return powerValue;
 }
 
-
+//make this a switch
 int INA::checkTransmission(int value) {
     if (value == 0) {
         //Serial.println("transaction succesful");
@@ -188,11 +190,6 @@ int INA::checkTransmission(int value) {
         Serial.println("return value unknown");
         return value;
     }
-}
-
-uint16_t INA::calculateShuntCal(float Rshunt) {
-    return 0.08192/(this->currentLSB * Rshunt);
-
 }
 
 void INA::WriteReg(uint16_t RegAddr, uint16_t data) {

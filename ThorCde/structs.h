@@ -17,6 +17,11 @@
 #define SETCONFIG 0X4127
 #define SETCAL 0x15D8
 #define cardSelect 11
+#define shuntRes100 100.68
+#define shuntRes1 1
+#define shuntRes01  0.022
+#define voltageLSBHigh 0.000040
+#define voltageLSBLow 0.000010
 
 // typedef enum {
 //   shunt100Resolution = .0001,
