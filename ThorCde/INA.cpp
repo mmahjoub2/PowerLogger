@@ -5,18 +5,16 @@ INA::INA(int INAnumber) {
     if (INAnumber == 0) {
         this->addr = INA0_ADDR;
     }
-    if (INAnumber == 1) {
+    else if (INAnumber == 1) {
         this->addr = INA1_ADDR;
     }
-    if (INAnumber == 2) {
+    else if (INAnumber == 2) {
         this->addr = INA2_ADDR;
     }
-    if(INAnumber == 3) {
+    else if(INAnumber == 3) {
         this->addr = INA3_ADDR;
     }
     resetRegValues();
-   
-    
 }
 
 void INA::resetRegValues() {
@@ -27,12 +25,12 @@ void INA::resetRegValues() {
     // make a 0.00004 a define so it does not have to be changed everywhere 
     voltageLSB = voltageLSBHigh;
 }
+
 //Set Register Values
 void INA::reset() {
     configReg.bitfield_t.RST = 0b1;
     WriteReg(ConfigAddr,configReg.bits);
     resetRegValues();
-    
 }
 
 void INA::ADCRange(bool high) {
@@ -43,9 +41,7 @@ void INA::ADCRange(bool high) {
     }
     else {
         configReg.bitfield_t.ADCRANGE = 0b1;
-        voltageLSB = voltageLSBLow;
-
-        
+        voltageLSB = voltageLSBLow;  
     }
     WriteReg(ConfigAddr,configReg.bits);
 }
@@ -82,8 +78,7 @@ void INA::AVGSample(uint16_t numberToAvg) {
         return;
     }
     // Serial.println(configReg.bits, HEX);
-    WriteReg(ConfigAddr, configReg.bits);
-    
+    WriteReg(ConfigAddr, configReg.bits); 
 }
 
 
@@ -101,7 +96,6 @@ void INA::setCalibration(double shuntValue) {
         this->shuntRes = shuntRes1;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_1); 
 	}
-
 	if(shuntValue == .01) {
         this->currentLSB = shuntCal01;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_01);
@@ -114,16 +108,12 @@ float INA::readVoltage() {
      // TODO: CHECK if MSB 1 use two complement ()
     uint16_t voltage = ReadReg(ShuntVoltageAddr);
     int16_t voltageInt = int16_t(voltage);
-    // if (voltage & 0x8000 != 0) {
-    //     voltage = (~voltage) + 0b1;
-    // }
     if(voltage == 0xFFFF || voltage == 0xFFF0) {
         return 0;
     }
     voltageInt = voltageInt >> 4;
     float voltageValue = static_cast<float>(voltageInt) * voltageLSB;
     return voltageValue;
-    
 }
 
 float INA::readBusVoltage() {
@@ -153,7 +143,6 @@ float INA::readPower() {
     if (power == 0xFFFF ||power == 0xFFF0 ) {
         return 0;
     }      
-    // Serial.println(power, HEX);
     power = power >> 4;
     float powerValue = static_cast<float>(power) * currentLSB* 32;
     return powerValue;
@@ -162,12 +151,9 @@ float INA::readPower() {
 //make this a switch
 int INA::checkTransmission(int value) {
     if (value == 0) {
-        //Serial.println("transaction succesful");
-        //Serial.println("data too long to fit in transmit buffer");
         return value;
     }
     else if (value == 1) {
-        // Serial.println("data too long to fit in transmit buffer");
         return value;
     }
     else if (value == 2) {
@@ -195,14 +181,13 @@ int INA::checkTransmission(int value) {
 void INA::WriteReg(uint16_t RegAddr, uint16_t data) {
     cu_t v;
     v.value = data;
-
     Wire.beginTransmission(this->addr);
     Wire.write(RegAddr);
     Serial.println(v.MSB, HEX);
     Serial.println(v.LSB,HEX);
-	Wire.write(v.MSB);
+    Wire.write(v.MSB);
     Wire.write(v.LSB);
-	checkTransmission(Wire.endTransmission());
+    checkTransmission(Wire.endTransmission());
 }
 
 uint16_t INA::ReadReg(uint16_t RegAddr) {
@@ -227,9 +212,7 @@ uint16_t INA::powerTwo(uint16_t value) {
     above |= above >> 16;
     ++above;                      // add one, carrying all the way through
                                   // leaving only one bit set.
-
     uint16_t below = above >> 1;  // find the next lower power of two.
-
     //  make this a if statement 
     return (above - value) < (value - below) ? above : below;
 }

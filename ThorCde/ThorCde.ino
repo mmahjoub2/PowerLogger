@@ -28,6 +28,9 @@ int previnaNum = -1000;
 int calNum = 0;
 int prevCalNum = 100;
 int prevCount = 1000;
+bool first = true;
+bool CalibrationChoiceState;
+bool cal;
 
 /*
 	TODO:	
@@ -45,18 +48,16 @@ void staticCalibrationChoice() {
 	display.setTextSize(1);
 	display.setTextColor(WHITE);
 	display.println("Calibration Menu");
-
 	display.setCursor(0, 10);
 	display.setTextSize(1);
 	display.setTextColor(WHITE);
 	display.println("Yes");
-
 	display.setCursor(0, 20);
 	display.setTextSize(1);
 	display.setTextColor(WHITE);
 	display.println("No");
-
 }
+
 bool calibrationChoice() { 
 	while(1) {
 		if (buttonFlag[0]) {
@@ -74,29 +75,24 @@ bool calibrationChoice() {
 			display.setCursor(50, 10);
 			display.println("<--");
 			display.display();
-
 			display.setTextColor(WHITE, BLACK);
 			display.setCursor(50, 20);
 			display.println("   ");
 			display.display();
 			if (buttonFlag[1]) {
 				buttonFlag[1] = false;
-				return true;
-				
+				return true;	
 			}
-
 		}
 		else if (count[0] == 1) {
 			display.setTextColor(WHITE, BLACK);
 			display.setCursor(50, 10);
 			display.println("   ");
 			display.display();
-
 			display.setTextColor(WHITE);
 			display.setCursor(50, 20);
 			display.println("<--");
 			display.display();
-
 			if (buttonFlag[1]) {
 				buttonFlag[1] = false;
 				return false;
@@ -109,22 +105,16 @@ bool calibrationChoice() {
 void staticCalibrationMenu() {
 	display.setTextSize(.01);
 	display.setTextColor(WHITE);
-
 	display.setCursor(0, 0);
 	display.println("Load 50 ohm");
-
 	display.setTextSize(.01);
 	display.setCursor(0, 10);
 	display.println("Load 100 ohm");
-
-
 	display.setTextSize(.01);
 	display.setCursor(0, 20);
 	display.println("Load 200 Ohm");
-
 	display.setCursor(100, 20);
 	display.println("INA");
-
 	display.display();
 }
 
@@ -141,6 +131,7 @@ void showCalRes(float shuntRes) {
 	display.clearDisplay();
 	display.display();		
 }
+
 void calibrationLoadMenu() {
 	clearDisplay();
 	display.setCursor(0, 10);
@@ -149,6 +140,7 @@ void calibrationLoadMenu() {
 	display.display();
 
 }
+
 void calibrationMenu() {
 	if (buttonFlag[0]) {
 		count[0]++;
@@ -157,10 +149,8 @@ void calibrationMenu() {
 		}
 		buttonFlag[0] = false;
 	}
-
 	staticCalibrationMenu();
 	//Title
-	
 	if (calNum != prevCalNum) {
 		display.setCursor(118, 20);
 		display.setTextColor(WHITE, BLACK);
@@ -206,15 +196,13 @@ void calibrationMenu() {
 
 		if (buttonFlag[1]) {
 			calibrationLoadMenu() ;
-			float res = calibrateINA(30,calNum,100,shuntValues[calNum]);
-			
+			float res = calibrateINA(30,calNum,100,shuntValues[calNum]);			
 			prevCalNum = calNum;
 			calNum++;
 			showCalRes(res);
 			buttonFlag[1] = false;
 			clearDisplay();
 		}
-
 	}
 	if (count[0] == 2) {
 		display.setCursor(75, 20);
@@ -254,25 +242,20 @@ void staticStartMenu() {
 	display.println("to Start");
 	display.display();
 }
+
 void staticMenu() {
 	display.setTextSize(.01);
 	display.setTextColor(WHITE);
-
 	display.setCursor(0, 0);
 	display.println("SHUNT 100");
-
 	display.setTextSize(.01);
 	display.setCursor(0, 10);
 	display.println("SHUNT 1");
-
-
 	display.setTextSize(.01);
 	display.setCursor(0, 20);
 	display.println("SHUNT 0.01");
-
 	display.setCursor(100, 20);
 	display.println("INA");
-
 	display.display();
 }
 /*
@@ -307,6 +290,7 @@ void staticDisplayDataMenu() {
 	display.display();
 	delay(100);
 }
+
 void DisplayData(float arr[]) {
 	if (buttonFlag[0] == true) {
 		count[0]++;
@@ -314,11 +298,8 @@ void DisplayData(float arr[]) {
 			count[0] = 0;
     	}
     	buttonFlag[0] = false;
-		
 	}
-	
 	staticDisplayDataMenu();
-
 	if (prevCount != count[0]) {
 		display.setCursor(120, 0);
 		display.setTextColor(WHITE, BLACK);
@@ -348,79 +329,75 @@ void DisplayData(float arr[]) {
 
 	//Display new vaLues
 	display.setCursor(50,0);
-
-  float data = arr[count[0]] * pow(10,3);
+	float data = arr[count[0]] * pow(10,3);
 	display.println(String(data, 1));
-  data = arr[count[0]+4] * pow(10,3);
+	data = arr[count[0]+4] * pow(10,3);
 	display.setCursor(50,10);
 	display.println(String(data, 1));
 	display.setCursor(50,20);
-  data = arr[count[0]+8] * pow(10,3);
+	data = arr[count[0]+8] * pow(10,3);
 	display.println(String(data, 1));
-	
 	// display.setCursor(110,8*i);
 	// display.println(String(int(arr[12])));
 	display.display();
 	delay(100);
-
 }
 
 void MoveCursor() {
-  if (buttonFlag[0]) {
-    if (count[0] > 2) {
-      count[0] = 0;
-    }
-    else {
-      count[0]++;
-    }
-    buttonFlag[0] = false;
-  }
+	if (buttonFlag[0]) {
+		if (count[0] > 2) {
+			count[0] = 0;
+		}
+		else {
+			count[0]++;
+		}
+		buttonFlag[0] = false;
+	}
 
-  if (previnaNum != inaNum) {
-    display.setCursor(118, 20);
-    display.setTextColor(WHITE, BLACK);
-    display.println(" ");
-    display.display();
-    display.setCursor(118, 20);
-    String temp = String(inaNum);
-    display.println(temp);
-    previnaNum = inaNum;
-  }
-  
-  if (count[0] == 0) {
-    display.setCursor(70, 0);
-    display.println("<--");
-    display.setTextColor(WHITE, BLACK);
-    display.setCursor(70, 10);
-    display.println("   ");
-    display.setCursor(70, 20);
-    display.println("   ");
-    display.display();
-	
-    if (buttonFlag[1]) {
-		shuntValues[inaNum] = 100;
-      if(inaNum == 0) {
-        Serial.print("INA0 100 set");
-        inaArray[inaNum].setCalibration(100);
-      }
-      else if(inaNum == 1) {
-        Serial.print("INA1 100 set");
-        inaArray[inaNum].setCalibration(100);
-      }
-      else if (inaNum == 2) {
-         Serial.print("INA2 100 set");
-       inaArray[inaNum].setCalibration(100);
-      }
-      else if(inaNum == 3) {
-         Serial.print("INA3 100 set");
-       inaArray[inaNum].setCalibration(100);
-      }
-      count[1] = 0;
-      inaNum++;
-      buttonFlag[1] = false;
+	if (previnaNum != inaNum) {
+		display.setCursor(118, 20);
+		display.setTextColor(WHITE, BLACK);
+		display.println(" ");
+		display.display();
+		display.setCursor(118, 20);
+		String temp = String(inaNum);
+		display.println(temp);
+		previnaNum = inaNum;
+	}
 
-    }
-  }
+	if (count[0] == 0) {
+		display.setCursor(70, 0);
+		display.println("<--");
+		display.setTextColor(WHITE, BLACK);
+		display.setCursor(70, 10);
+		display.println("   ");
+		display.setCursor(70, 20);
+		display.println("   ");
+		display.display();
+
+		if (buttonFlag[1]) {
+			shuntValues[inaNum] = 100;
+			if(inaNum == 0) {
+				Serial.print("INA0 100 set");
+				inaArray[inaNum].setCalibration(100);
+			}
+			else if(inaNum == 1) {
+				Serial.print("INA1 100 set");
+				inaArray[inaNum].setCalibration(100);
+			}
+			else if (inaNum == 2) {
+				Serial.print("INA2 100 set");
+				inaArray[inaNum].setCalibration(100);
+			}
+			else if(inaNum == 3) {
+				Serial.print("INA3 100 set");
+				inaArray[inaNum].setCalibration(100);
+			}
+			count[1] = 0;
+			inaNum++;
+			buttonFlag[1] = false;
+		}
+	}
 	if (count[0] == 1) {
 		display.setCursor(70, 10);
 		display.println("<--");
@@ -499,58 +476,48 @@ float calibrateINA(int iterations, int inaIndex, float load, double shuntRes) {
 	if (shuntRes == 1 || shuntRes == 0.01) {
 		inputVoltage = 5;
 	}
-	
+
 	if (shuntRes == 100) {
 			inputVoltage = 0.04;
-		}
+	}
 
 	for (int i = 0; i< iterations; i++) {
 		float voltage = inaArray[inaIndex].readVoltage();
 		total = total + inaArray[inaIndex].calculateShuntResitance(load, inputVoltage ,voltage,shuntRes);
 	}
-
 	total = total/iterations;
 	inaArray[inaIndex].setShuntRes(total);
 	Serial.print("Shunt Res: ");
 	Serial.println(total);
-
 	return total;
 }
+
 void blinky() {
 	digitalToggle(LED_BUILTIN); // turn the LED on (HIGH is the voltage level)
 	delay(100); 
-	
 }
 
 void setup() {
-  Wire.begin();
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  RTCsetUp();  
-  setupSD();
-  display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
-  display.display();
-  display.clearDisplay();
-  // pinMode(ALERT3_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(CALBUTTON0_PIN), button0PressInterupt, FALLING);
-  attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button1PressInterupt, FALLING);
-  attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
-  attachInterrupt(digitalPinToInterrupt(CALLBUTTON3_PIN), button3PressInterupt, FALLING);
-  // attachInterrupt(digitalPinToInterrupt(ALERT0_PIN), alertZeroInterupt, FALLING);
-  // attachInterrupt(digitalPinToInterrupt(ALERT1_PIN), alertOneInterupt, FALLING);
-  // attachInterrupt(digitalPinToInterrupt(ALERT2_PIN), alertTwoInterupt, FALLING);
-  // attachInterrupt(digitalPinToInterrupt(ALERT3_PIN), alertThreeInterupt, FALLING);
-  pinMode(LED_BUILTIN, OUTPUT);
+	Wire.begin();
+	// put your setup code here, to run once:
+	Serial.begin(115200);
+	RTCsetUp();  
+	setupSD();
+	display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
+	display.display();
+	display.clearDisplay();
+	// pinMode(ALERT3_PIN, INPUT_PULLUP);
+	attachInterrupt(digitalPinToInterrupt(CALBUTTON0_PIN), button0PressInterupt, FALLING);
+	attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button1PressInterupt, FALLING);
+	attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
+	attachInterrupt(digitalPinToInterrupt(CALLBUTTON3_PIN), button3PressInterupt, FALLING);
+	pinMode(LED_BUILTIN, OUTPUT);
 
-  inaArray[0].reset();
-  for (int i=0; i<4; i++) {
-    inaArray[i].reset();
-  } 
+	for (int i=0; i<4; i++) {
+		inaArray[i].reset();
+	} 
 }
 
-bool first = true;
-bool CalibrationChoiceState;
-bool cal;
 void loop() {
 	// ON STATE
 	if (startFlag) {
@@ -567,16 +534,13 @@ void loop() {
     			Serial.println(filename);
 				logfile.println("Voltage INA1, Voltage INA2, VoltageINA3, VoltageINA3, Current INA1, Current INA2, Current INA3, Current INA4, Power INA1, Power INA2, Power INA3, Power INA4, Time");
 				dataFile.close();
-			}
-				
+			}		
 		}
-
 		if(inaNum < 4) {
 			staticMenu();
 			MoveCursor();
 			clear = true;
 		}
-		
 		else {
 			if (clear) {
 				display.clearDisplay();
@@ -589,7 +553,6 @@ void loop() {
 				}
         		CalibrationChoiceState = true;
 			}
-
 			if (CalibrationChoiceState) {
 				cal = calibrationChoice();
 				CalibrationChoiceState = false;
@@ -597,22 +560,17 @@ void loop() {
 				display.display();
 				count[0] = 0;
 			}
-			
 			if (cal && calNum < 4) {
 				calibrationMenu();
 				if(calNum == 3) {
 					count[0] = 0;
- 				}
-				
+ 				}	
 			}
-
 			else {
 				// check for any interupts 
 				DateTime now = rtc.now();
 				for (int i = 0; i < 4; i++) {
-
 					inputData[i] = inaArray[i].readVoltage();
-
 					if (inputData[i] < 0.02 && inaArray[i].getADCFlag() && inputData [i] != 0) {
 						inaArray[i].ADCRange(false);
 					}
@@ -621,14 +579,11 @@ void loop() {
 					}
 					inputData[i+4] = inaArray[i].calculateCurrent(inputData[i]);
 					inputData[i+8] = inaArray[i].calculatePower(inputData[i+4]);
-
 				}
-
 				inputData[12] = now.second();
 				String testString;
 				Serial.print("FILE NAME: ");  
 				Serial.println(filename);
-				
 				String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
 
 				for (int i =0; i < 13; i++) {
@@ -662,7 +617,6 @@ void loop() {
 			}
 		}
 	}
-
 	// OFF STATE
 	else {
 		if (!first) {
@@ -684,62 +638,48 @@ void loop() {
 		previnaNum = -1000;
 		CalibrationChoiceState = true;
 	}
-	
 }
 
 //Interupts 
 void button0PressInterupt() {
-   if (millis() - lastFire[0] < 300) { // Debounce
-    return;
-  }
-  lastFire[0] = millis();
-  buttonFlag[0] = true;
+	if (millis() - lastFire[0] < 300) { // Debounce
+		return;
+	}
+	lastFire[0] = millis();
+	buttonFlag[0] = true;
 }
+
 void button1PressInterupt() {
-   if (millis() - lastFire[1] < 300) { // Debounce
-    return;
-  }
-  lastFire[1] = millis();
-  buttonFlag[1] = true;
+	if (millis() - lastFire[1] < 300) { // Debounce
+		return;
+	}
+	lastFire[1] = millis();
+	buttonFlag[1] = true;
 }
 
 // Start and Stop logging
 void button2PressInterupt() {
-  if (millis() - lastFire[2] < 300) { // Debounce
-    return;
-  }
-   lastFire[2] = millis();
-   if (buttonFlag[2]) {
+	if (millis() - lastFire[2] < 300) { // Debounce
+		return;
+	}
+	lastFire[2] = millis();
+
+	if (buttonFlag[2]) {
 		buttonFlag[2] = false;
-   }
-   else {
-	buttonFlag[2] = true;
-   }
+	}
+	else {
+		buttonFlag[2] = true;
+	}
 }
 
 // set into low power mode (on/off button)
 void button3PressInterupt() {
-   if (millis() - lastFire[3] < 300) { // Debounce
-    return;
-  }
-  if (startFlag)
-    startFlag = false;
-  else 
-    startFlag = true;
-  restartCount++;
+	if (millis() - lastFire[3] < 300) { // Debounce
+		return;
+	}
+	if (startFlag)
+		startFlag = false;
+	else 
+		startFlag = true;
+	restartCount++;
 }
-
-//alert0 interupt
-void alertZeroInterupt() {
-  alertFlag[0] = true;
-}
-void alertOneInterupt() {
-  alertFlag[1] = true;
-}
-void alertTwoInterupt() {
-  alertFlag[2] = true;
-}
-void alertThreeInterupt() {
-  alertFlag[3] = true;
-}
- 

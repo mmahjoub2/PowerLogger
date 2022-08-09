@@ -23,12 +23,6 @@
 #define voltageLSBHigh 0.000040
 #define voltageLSBLow 0.000010
 
-// typedef enum {
-//   shunt100Resolution = .0001,
-//   shunt1Resolution = .0001,
-//   shunt001Resolution = .0001
-// } shuntResolution; 
-
 typedef enum {
   configDefault = 0x4127
 
@@ -68,7 +62,6 @@ typedef union  {
     uint16_t RST      : 1;
   } bitfield_t;
 } ConfigReg_t;
-
 
 //Calibration Register 
 typedef union  {
