@@ -378,19 +378,15 @@ void MoveCursor() {
 		if (buttonFlag[1]) {
 			shuntValues[inaNum] = 100;
 			if(inaNum == 0) {
-				Serial.print("INA0 100 set");
 				inaArray[inaNum].setCalibration(100);
 			}
 			else if(inaNum == 1) {
-				Serial.print("INA1 100 set");
 				inaArray[inaNum].setCalibration(100);
 			}
 			else if (inaNum == 2) {
-				Serial.print("INA2 100 set");
 				inaArray[inaNum].setCalibration(100);
 			}
 			else if(inaNum == 3) {
-				Serial.print("INA3 100 set");
 				inaArray[inaNum].setCalibration(100);
 			}
 			count[1] = 0;
@@ -411,19 +407,15 @@ void MoveCursor() {
 		if (buttonFlag[1]) {
 			shuntValues[inaNum] = 1;
 			if(inaNum == 0) {
-				Serial.print("INA0 1 set");
 				inaArray[inaNum].setCalibration(1);
 			}
 			else if(inaNum == 1) {
-				Serial.print("INA1 1 set");
 				inaArray[inaNum].setCalibration(1);
 			}
 			else if (inaNum == 2) {
-				Serial.print("INA2 1 set");
 				inaArray[inaNum].setCalibration(1);
 			}
 			else if(inaNum == 3) {
-				Serial.print("INA3 1 set");
 				inaArray[inaNum].setCalibration(1);
 			}
 			buttonFlag[1] = false;
@@ -444,19 +436,15 @@ void MoveCursor() {
 		if (buttonFlag[1]) {
 			shuntValues[inaNum] = 0.01;
 		if(inaNum == 0) {
-			Serial.print("INA0 0.01 set");
 			inaArray[inaNum].setCalibration(0.01);
 		}
 		else if(inaNum == 1) {
-			Serial.print("INA1 0.01 set");
 			inaArray[inaNum].setCalibration(.01);
 		}
 		else if (inaNum == 2) {
-			Serial.print("INA2 0.01 set");
 			inaArray[inaNum].setCalibration(.01);
 		}
 		else if(inaNum == 3) {
-			Serial.print("INA3 0.01 set");
 			inaArray[inaNum].setCalibration(.01);
 		}
 
@@ -470,9 +458,6 @@ void MoveCursor() {
 float calibrateINA(int iterations, int inaIndex, float load, double shuntRes) {
 	float total = 0;
 	float inputVoltage;
-	Serial.print("Shunt Res: ");
-	Serial.println(shuntRes);
-
 	if (shuntRes == 1 || shuntRes == 0.01) {
 		inputVoltage = 5;
 	}
@@ -487,8 +472,6 @@ float calibrateINA(int iterations, int inaIndex, float load, double shuntRes) {
 	}
 	total = total/iterations;
 	inaArray[inaIndex].setShuntRes(total);
-	Serial.print("Shunt Res: ");
-	Serial.println(total);
 	return total;
 }
 
@@ -506,7 +489,6 @@ void setup() {
 	display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
 	display.display();
 	display.clearDisplay();
-	// pinMode(ALERT3_PIN, INPUT_PULLUP);
 	attachInterrupt(digitalPinToInterrupt(CALBUTTON0_PIN), button0PressInterupt, FALLING);
 	attachInterrupt(digitalPinToInterrupt(CALLBUTTON1_PIN), button1PressInterupt, FALLING);
 	attachInterrupt(digitalPinToInterrupt(CALLBUTTON2_PIN), button2PressInterupt, FALLING);
@@ -532,8 +514,12 @@ void loop() {
 			if(dataFile) {
 				Serial.print("Writing to "); 
     			Serial.println(filename);
-				logfile.println("Voltage INA1, Voltage INA2, VoltageINA3, VoltageINA3, Current INA1, Current INA2, Current INA3, Current INA4, Power INA1, Power INA2, Power INA3, Power INA4, Time");
+				dataFile.println("Voltage INA1, Voltage INA2, VoltageINA3, VoltageINA3, Current INA1, Current INA2, Current INA3, Current INA4, Power INA1, Power INA2, Power INA3, Power INA4, Time");
 				dataFile.close();
+			}
+			else {
+				Serial.print("Could not create:");
+				Serial.println(filename);
 			}		
 		}
 		if(inaNum < 4) {
@@ -547,7 +533,6 @@ void loop() {
 				display.display();
 				clear = false;
 				//reset count values 
-				Serial.println("clear INA NUm");
 				for (int i = 0; i < 4; i++) {
 					count[i] = 0;
 				}
@@ -582,8 +567,7 @@ void loop() {
 				}
 				inputData[12] = now.second();
 				String testString;
-				Serial.print("FILE NAME: ");  
-				Serial.println(filename);
+				
 				String time = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
 
 				for (int i =0; i < 13; i++) {
@@ -600,14 +584,20 @@ void loop() {
 				File dataFile = SD.open(filename, FILE_WRITE);
 				if (dataFile && buttonFlag[2]) {
 					Serial.println(testString);
+					Serial.print("FILE NAME: ");  
+					Serial.println(filename);
 					dataFile.println(testString);
-					dataFile.flush();
 					dataFile.close();
 					delay(10);
 					blinky();
 				}
+				else if (!dataFile && buttonFlag[2]) {
+					Serial.println("could not openn file");
+				}
+				
 				if (!buttonFlag[2]) {
 					digitalWrite(LED_BUILTIN, LOW);
+					dataFile.close();
 				}
 			
 				if (inputData[12] != prevTime) {
@@ -674,7 +664,7 @@ void button2PressInterupt() {
 
 // set into low power mode (on/off button)
 void button3PressInterupt() {
-	if (millis() - lastFire[3] < 300) { // Debounce
+	if (millis() - lastFire[3] < 400) { // Debounce
 		return;
 	}
 	if (startFlag)

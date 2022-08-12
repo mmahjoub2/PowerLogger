@@ -74,7 +74,7 @@ void INA::AVGSample(uint16_t numberToAvg) {
         configReg.bitfield_t.AVG = 0b110;
     }
     else {
-        Serial.println("No valid entry");
+       // Serial.println("No valid entry");
         return;
     }
     // Serial.println(configReg.bits, HEX);
@@ -84,14 +84,12 @@ void INA::AVGSample(uint16_t numberToAvg) {
 
 void INA::setCalibration(double shuntValue) {
     if (shuntValue == 100) {
-        Serial.println("100");
         this->currentLSB = shuntCal100;
 		WriteReg(CalibrationRegAddr, CAL_SHUNT_100);
         this->shuntRes = shuntRes100;
         ADCRange(false);
 	}
 	if (shuntValue == 1) {
-        Serial.println("SET SHUNT CAL");
         this->currentLSB = shuntCal1;
         this->shuntRes = shuntRes1;
         WriteReg(CalibrationRegAddr, CALL_SHUNT_1); 
@@ -157,23 +155,23 @@ int INA::checkTransmission(int value) {
         return value;
     }
     else if (value == 2) {
-        Serial.println("received NACK on transmit of address.");
+       // Serial.println("received NACK on transmit of address.");
         return value;
     }
     else if (value == 3) {
-        Serial.println("received NACK on transmit of data");
+        //Serial.println("received NACK on transmit of data");
         return value;
     }
     else if (value == 4) {
-        Serial.println("other error");
+        //Serial.println("other error");
         return value;
     }
     else if (value == 5) {
-        Serial.println("timeout");
+        //Serial.println("timeout");
         return value;
     }
     else {
-        Serial.println("return value unknown");
+        //Serial.println("return value unknown");
         return value;
     }
 }
@@ -183,8 +181,6 @@ void INA::WriteReg(uint16_t RegAddr, uint16_t data) {
     v.value = data;
     Wire.beginTransmission(this->addr);
     Wire.write(RegAddr);
-    Serial.println(v.MSB, HEX);
-    Serial.println(v.LSB,HEX);
     Wire.write(v.MSB);
     Wire.write(v.LSB);
     checkTransmission(Wire.endTransmission());
@@ -247,7 +243,7 @@ void INA::setShuntUnderLimit() {
 
 void INA::setLimitValue(bool high) {
     if (high) {
-        Serial.println("set high");
+       // Serial.println("set high");
         alertLimitReg.bits = 0x0010;
     }
 }
